@@ -116,7 +116,7 @@ namespace Peresentation.Controllers
             {
                 Id = userId,
              
-                UserName = User.FindFirstValue(ClaimTypes.Name),
+         
                 Email = User.FindFirstValue(ClaimTypes.Email),
                 Roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList()
             });

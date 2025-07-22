@@ -26,7 +26,7 @@ namespace Application.IServices
      
         /// Updates the description of an existing permission.
         /// </summary>>
-        Task<PermissionDto> UpdatePermissionAsync(Guid permissionId, UpdetePermissionDto dto);
+        Task<PermissionDto> UpdatePermissionAsync(Guid permissionId, UpdatePermissionDto dto);
 
   
         /// Deletes a permission definition from the system. (Admin-level operation)

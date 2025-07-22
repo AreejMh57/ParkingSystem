@@ -5,7 +5,7 @@ namespace Domain.Entities
 {
     public class Wallet
     {
-        public Guid WalletId { get; set; }
+        public Guid? WalletId { get; set; }
 
         [Required]
         [Range(0.0, double.MaxValue)]

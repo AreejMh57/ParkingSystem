@@ -128,14 +128,13 @@ namespace Infrastructure.Contexts
 
         // Configure all relationships
         private void ConfigureRelationships(ModelBuilder modelBuilder)
-        {
-            // 1. User -> Wallet (One-to-one)
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Wallet)
-                .WithOne(w => w.User)
-                .HasForeignKey<User>(w => w.WalletId)
-                .OnDelete(DeleteBehavior.Restrict);
+        {// 1. User -> Wallet (One-to-one)
+            modelBuilder.Entity<Wallet>()
+               .HasOne(w => w.User)          
+               .WithOne(u => u.Wallet)       
+               .HasForeignKey<Wallet>(w => w.UserId);
 
+           
 
             // 2.Wallet ->PaymentTransaction  (One-to-Many)
             modelBuilder.Entity<Wallet>()

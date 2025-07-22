@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Entities;
 
 namespace Application.DTOs
 {
@@ -14,8 +15,11 @@ namespace Application.DTOs
 
         public Guid GarageId { get; set; }
 
-        public enum Type { Entry, Exit, Occupancy } // "Entry", "Exit", "Occupancy"
-        public enum Status { Active, Inactive } // "Active", "Inactive"
 
+        public Sensor.Type? SensorType { get; set; }
+        public Sensor.Status? AccountStatus { get; set; }
+
+        public DateTime? LastMaintenance { get; set; }
+    
     }
 }

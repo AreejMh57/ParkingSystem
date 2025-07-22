@@ -10,7 +10,7 @@ namespace Infrastructure.seeds.PermissionData
     {
         public static readonly string[] Actions = new[]
         {
-        "create", "Brouse", "update", "delete"
+        "create", "browse", "update", "delete"
     };
     }
 

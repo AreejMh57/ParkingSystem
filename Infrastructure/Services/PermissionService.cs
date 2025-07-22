@@ -72,7 +72,7 @@ namespace Infrastructure.Services
             return _mapper.Map<PermissionDto>(permission);
         }
 
-        public async Task<PermissionDto> UpdatePermissionAsync(Guid permissionId, UpdetePermissionDto dto)
+        public async Task<PermissionDto> UpdatePermissionAsync(Guid permissionId, UpdatePermissionDto dto)
         {
             var permission = await _permissionRepo.GetByIdAsync(permissionId);
             if (permission == null)

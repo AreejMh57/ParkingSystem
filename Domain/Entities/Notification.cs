@@ -8,10 +8,10 @@ namespace Domain.Entities
         public Guid NotificationId { get; set; }
 
         [Required]
-        public string Channel { get; set; } // "Email", "SMS", etc.
+        public string? Channel { get; set; }= string.Empty; // "Email", "SMS", etc.
 
         [Required]
-        public string Message { get; set; }
+        public string Message { get; set; }= string.Empty;
 
         [Required]
         public bool IsRead { get; set; } = false;       

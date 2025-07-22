@@ -19,6 +19,9 @@ namespace Domain.Entities
         public Status AccountStatus { get; set; } = Status.Active;
 
 
+       
+        public Type SensorType { get; set; }
+
         public DateTime? LastMaintenance { get; set; } // Nullable
         public Guid GarageId { get; set; }
 

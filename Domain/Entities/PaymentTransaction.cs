@@ -31,7 +31,7 @@ namespace Domain.Entities
         public Guid WalletId { get; set; }
 
         public Guid BookingId { get; set; }
-         public string UserId { get; set; }
+        
 
         public DateTime CreatedAt { get; set; }
 

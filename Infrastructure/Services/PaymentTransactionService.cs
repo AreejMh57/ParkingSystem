@@ -74,7 +74,7 @@ namespace Infrastructure.Services
                 TransactionId = Guid.NewGuid(),
                 WalletId = dto.WalletId,
                 BookingId = dto.BookingId,
-                UserId = dto.UserId, // Use UserId from DTO
+               
                 Amount = dto.Amount,
                 TransactionType = dto.Type, // Use Type from DTO (maps to TransactionType in entity)
                 PaymentStatus = dto.Status, // Use Status from DTO (maps to PaymentStatus in entity)

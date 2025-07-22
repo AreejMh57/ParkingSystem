@@ -11,15 +11,15 @@ namespace Infrastructure.seeds.PermissionData
         {
         public static readonly string[] Modules = new[]
         {
-        "Booking",
-        "Garage",
-        "Payment",
-        "User",
-        "Notification",
-        "Wallet",
-        "Sensor",
-        "PaymentTransaction",
-        "Token"
+        "booking",
+        "garage",
+         "permission",
+        "user",
+        "notification",
+        "wallet",
+        "sensor",
+        "paymentTransaction",
+        "token"
     };
         }
 

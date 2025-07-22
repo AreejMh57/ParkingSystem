@@ -7,15 +7,13 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs
 {
-    public class CreateTokenDto
+    public class ValidateBookingTokenDto
     {
+        [Required]
+        public Guid BookingId { get; set; } 
 
-
+        [Required]
        
-        [Required]
-        public Guid BookingId { get; set; }
-        [Required]
-        public int ExpirationMinutes { get; set; }
-
+        public string Value { get; set; } // قيمة التوكن المقدمة للتحقق
     }
 }

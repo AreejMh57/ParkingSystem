@@ -18,7 +18,7 @@ namespace Domain.Entities
 
         [Required]
         public Guid BookingId { get; set; }
-        public String UserId { get; set; }
+       
 
         public DateTime CreatedAt { get; set; }
 

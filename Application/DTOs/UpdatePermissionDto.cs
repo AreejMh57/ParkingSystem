@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs
 {
-   public class UpdetePermissionDto
+   public class UpdatePermissionDto
     {
 
         public Guid PermissionId { get; set; }

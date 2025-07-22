@@ -19,8 +19,8 @@ namespace Infrastructure.seeds.PermissionData
             {
                 foreach (var action in PermissionActions.Actions)
                 {
-                    var name = $"{module}_{action}";
-
+                   
+                    var name = $"{module.ToUpper()}_{action.ToUpper()}";
                     permissions.Add(new Permission
                     {
                         PermissionId = Guid.NewGuid(),

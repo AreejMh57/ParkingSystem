@@ -9,7 +9,7 @@ namespace Application.DTOs
 {
     public class UserDto
     {
-        public String UserId { get; set; }
+        public String Id { get; set; }
        
         public string Email { get; set; }
 
@@ -17,10 +17,10 @@ namespace Application.DTOs
         public string PhoneNumber { get; set; }
 
         
-        public string Password { get; set; }
+       // public string Password { get; set; }
         
         public  string Token   {get; set; }
     
-        public Guid WalletId { get; set; }
+        
     }
 }

@@ -23,7 +23,7 @@ namespace Application.Mapping
                                                                   // Name, Description will map automatically.
 
             // From UpdatePermissionDto to Permission Entity
-            CreateMap< UpdetePermissionDto, Permission>()
+            CreateMap< UpdatePermissionDto, Permission>()
                 .ForMember(dest => dest.PermissionId, opt => opt.Ignore()) // ID is used for lookup, not mapped from DTO
                 .ForMember(dest => dest.Name, opt => opt.Ignore()); // Name is generally not updatable via this DTO
                                                                     // Description will map automatically.

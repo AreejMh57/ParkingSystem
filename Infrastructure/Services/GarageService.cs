@@ -67,7 +67,7 @@ namespace Infrastructure.Services
             garage.PricePerHour = updateGarageDto.PricePerHour;
             garage.UpdatedAt = DateTime.UtcNow;
 
-            _garageRepo.Update(garage);
+            //_garageRepo.Update(garage);
             await _garageRepo.SaveChangesAsync();
             // Map the updated garage entity to GarageDto and return it
             return _mapper.Map<GarageDto>(garage); // Return the DTO

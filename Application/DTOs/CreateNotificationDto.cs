@@ -11,14 +11,14 @@ namespace Application.DTOs
     {
 
 
-        public String UserId { get; set; }
+        public String UserId { get; set; }= string.Empty;
 
         public Guid BookingId { get; set; }
 
         [Required]
-        public string Channel { get; set; }
+        public string? Channel { get; set; }= string.Empty;
         [Required]
-        public string Message { get; set; }
+        public string Message { get; set; }= string.Empty;
 
     }
 }

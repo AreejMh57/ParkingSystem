@@ -10,10 +10,10 @@ namespace Application.DTOs
 
     {
         public Guid NotificationId { get; set; }
-        public string Channel { get; set; } 
-        public string Message { get; set; }
+        public string Channel { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
 
         public bool IsRead { get; set; } 
-        public String UserId { get; set; }
+        public String UserId { get; set; } = string.Empty;
     }
 }

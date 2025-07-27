@@ -18,14 +18,18 @@ namespace Domain.Entities
 
         [Required]
         public Guid BookingId { get; set; }
-       
 
-        public DateTime CreatedAt { get; set; }
 
-        public DateTime UpdatedAt { get; set; }
-
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow; 
         public Booking Booking { get; set; }
 
+
+        [Required]
+        public string UserId { get; set; }
+
+        public bool IsUsed { get; set; } = false;
+        public  User User { get; set; }
 
 
 

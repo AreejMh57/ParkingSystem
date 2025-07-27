@@ -175,5 +175,49 @@ namespace Presentation.Controllers
                 return StatusCode(500, new { Message = "An error occurred while deleting the sensor.", Details = ex.Message });
             }
         }
+
+
+        /// <summary>
+        /// Receives status reports from a sensor (e.g., occupied/free).
+        /// This endpoint is called by the physical sensor or a gateway.
+        /// (Protected by SensorKey in DTO for now, could be API Key Auth in production)
+        /// </summary>
+        /// <param name="dto">Sensor status report details.</param>
+        /// <returns>200 OK if report processed, or error.</returns>
+        [HttpPost("report-status")]
+        [AllowAnonymous] // <--- للسماح للحساسات غير المصادقة بالوصول (يجب تغييرها في الإنتاج)
+        // في الإنتاج: [Authorize(AuthenticationSchemes = ApiKeyAuthenticationDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> ReportSensorStatus([FromBody] SensorStatusReportDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            try
+            {
+                var success = await _sensorService.ReportSensorStatusAsync(dto);
+                if (success)
+                {
+                    return Ok(new { Message = "Sensor status reported successfully." });
+                }
+                return BadRequest(new { Message = "Failed to process sensor status report." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { Message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex) // إذا كان مفتاح الحساس غير صحيح
+            {
+                return Unauthorized(new { Message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An unexpected error occurred while reporting sensor status.", Details = ex.Message });
+            }
+        }
     }
-}
+}   

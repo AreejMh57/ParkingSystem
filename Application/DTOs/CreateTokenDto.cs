@@ -9,9 +9,9 @@ namespace Application.DTOs
 {
     public class CreateTokenDto
     {
+        [Required]
+        public String UserId { get; set; }  
 
-
-       
         [Required]
         public Guid BookingId { get; set; }
         [Required]

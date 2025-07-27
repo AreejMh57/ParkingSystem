@@ -25,7 +25,7 @@ using Infrastructure.seeds.PermissionData;
 
 
 var builder = WebApplication.CreateBuilder(args);
-
+//builder.WebHost.UseUrls("http://0.0.0.0:5000", "https://0.0.0.0:5001");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
@@ -82,23 +82,39 @@ builder.Services.AddScoped<ISensorService, SensorService>();
 
 
 builder.Services.AddScoped<IGarageService, GarageService>();
-builder.Services.AddScoped<INotificationService,NotificationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins("https://localhost:7169") 
-                            .AllowAnyHeader()
-                            .AllowAnyMethod());
-});
+
+//builder.Services.AddCors(options =>
+//{
+  //  options.AddPolicy("AllowFlutter", policy =>
+    //{
+      //  policy.WithOrigins(
+                //      "http://localhost",       // ·· ÿÊÌ— «·„Õ·Ì
+         //       "http://192.168.96.230"// „À«·: IP ÃÂ«“ Flutter
+                                       //   "http://<Public_IP>"     // ≈–« ﬂ«‰ «·Ê’Ê· ⁄»— «·≈‰ —‰ 
+           // )
+
+            //AllowAnyHeader()
+            //.AllowAnyMethod();
+  //  });
+//});
+//builder.Services.AddCors(options =>
+//{
+// options.AddPolicy("AllowSpecificOrigin",
+//   builder => builder.WithOrigins("https://localhost:7169") 
+//                     .AllowAnyHeader()
+//                    .AllowAnyMethod());
+//});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi                                                                                                                                                          
 builder.Services.AddOpenApi();
 
 
 var app = builder.Build();
+app.UseCors("AllowFlutter");
 app.UseHttpsRedirection();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -108,7 +124,7 @@ if (app.Environment.IsDevelopment())
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();  
+    app.UseSwagger();
     app.UseSwaggerUI(); // · ›⁄Ì· Ê«ÃÂ… «·„” Œœ„ «· ›«⁄·Ì… (Swagger UI)
 }
 app.UseRouting();
@@ -131,7 +147,7 @@ using (var scope = app.Services.CreateScope())
     var userManager = services.GetRequiredService<UserManager<User>>();
 
 
-  await IdentitySeeder.SeedRolesAndAdminUserAsync(userManager, roleManager, context);
+    await IdentitySeeder.SeedRolesAndAdminUserAsync(userManager, roleManager, context);
 
     await PermissionSeeder.SeedPermissionsAndAssignToRolesAsync(context, roleManager);
 }

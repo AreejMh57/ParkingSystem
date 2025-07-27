@@ -25,6 +25,7 @@ namespace Domain.Entities
         public DateTime? LastMaintenance { get; set; } // Nullable
         public Guid GarageId { get; set; }
 
+        public bool IsOccupied { get; set; } = false;
         public DateTime CreatedAt { get; set; }
 
         public DateTime UpdatedAt { get; set; }

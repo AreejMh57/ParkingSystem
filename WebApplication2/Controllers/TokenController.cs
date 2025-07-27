@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization; // لـ[Authorize] attribute
 using Microsoft.AspNetCore.Mvc; // لـControllerBase, IActionResult, إلخ
 using System; // لـGuid
 using System.Collections.Generic; // لـIEnumerable
-using System.Security.Claims; // لـClaimTypes.NameIdentifier (إذا لزم)
+using System.Security.Claims; // لـClaimTypes.NameIdentifier
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity; // لـIdentityResult
 
@@ -14,7 +14,7 @@ namespace Presentation.Controllers
     [ApiController] // يشير إلى أن هذا المتحكم يستجيب لطلبات API الويب
     [Route("api/[controller]")] // يحدد المسار الأساسي لهذا المتحكم (مثلاً: /api/Token)
     // <--- حماية عامة: يمكن أن تكون لـAdmin أو ParkingManager إذا كانت الإدارة مركزية --->
-    [Authorize(Roles = "Admin,ParkingManager")]
+    [Authorize(Roles = "Admin,ParkingManager")] // هذا المتحكم خاص بالإدارة بشكل عام
     public class TokenController : ControllerBase
     {
         private readonly ITokenService _tokenService;
@@ -24,45 +24,70 @@ namespace Presentation.Controllers
             _tokenService = tokenService;
         }
 
+
+
         /// <summary>
-        /// Creates and stores a new token for a specific booking.
-        /// Requires 'token_create' permission.
+        /// Requests a specific sensor access token for an authenticated user and booking.
+        /// This acts as the "Service Ticket Request" in Kerberos-like flow.
+        /// Requires 'token_create' permission. (Or a more specific 'sensor_access_token_request' if defined).
         /// </summary>
-        /// <param name="dto">DTO containing booking ID and expiration minutes.</param>
-        /// <returns>A TokenDto of the newly created token.</returns>
-        [HttpPost("create")]
-        [Authorize(Policy = "token_create")] // تتطلب صلاحية إنشاء توكنات
-        public async Task<IActionResult> CreateBookingToken([FromBody] CreateTokenDto dto)
+        /// <param name="dto">Details for the token request (UserId, BookingId, ExpirationMinutes).</param>
+        /// <returns>A TokenDto of the newly generated sensor access token.</returns>
+        [HttpPost("request-sensor-access")]
+        [Authorize(Policy = "TOKEN_CREATE")] // <--- صلاحية إنشاء توكن (Admin, ParkingManager, Customer)
+        public async Task<IActionResult> RequestSensorAccessToken([FromBody] CreateTokenDto dto)
         {
+            // 1. استخراج UserId من توكن المستخدم المصادق عليه (الأكثر أماناً)
+            var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(authenticatedUserId))
+            {
+                return Unauthorized("User ID not found in token. Please log in.");
+            }
+
+            // 2. التحقق من أن الطلب يخص المستخدم نفسه (إذا لم يكن Admin)
+            // (هذا ضروري إذا كان Customer هو من يطلب التوكن لنفسه)
+            // if (dto.UserId != authenticatedUserId) // إذا كان UserId في DTO مختلفاً عن المصادق عليه
+            // {
+            //     // Optional: Check if the authenticated user is an Admin
+            //     // if (!User.IsInRole("Admin")) // إذا لم يكن Admin، فليست له صلاحية لطلب توكن لغيره
+            //     // {
+            //     //     return Forbid("You can only request an access token for yourself.");
+            //     // }
+            //     // else { dto.UserId = authenticatedUserId; } // إذا كان Admin، دع له يطلب لغيره
+            // }
+
+            // بما أن UserId مطلوب في CreateTokenDto، سنعيد تعيينه من التوكن لضمان الاتساق والأمان
+            dto.UserId = authenticatedUserId;
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
             try
             {
-                var newToken = await _tokenService.CreateBookingTokenAsync(dto);
-                return StatusCode(201, newToken); // HTTP 201 Created
+                var sensorAccessToken = await _tokenService.CreateCustomTokenAsync(dto);
+                return StatusCode(201, sensorAccessToken); // HTTP 201 Created
             }
-            catch (KeyNotFoundException ex) // إذا كان الحجز (BookingId) غير موجود
+            catch (KeyNotFoundException ex) // إذا كان المستخدم أو الحجز غير موجود
             {
                 return NotFound(new { Message = ex.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "An error occurred while creating the booking token.", Details = ex.Message });
+                return StatusCode(500, new { Message = "An error occurred while requesting sensor access token.", Details = ex.Message });
             }
         }
-
+    
         /// <summary>
-        /// Validates a submitted token for a specific booking.
-        /// This endpoint might be [AllowAnonymous] if validation happens externally (e.g., via email link).
+        /// Creates and stores a new custom token for a specific user and booking.
+        /// Requires 'token_create' permission.
         /// </summary>
-        /// <param name="dto">DTO containing booking ID and the token string.</param>
-        /// <returns>Success message or detailed failure reasons.</returns>
-        [HttpPost("validate")]
-        // [AllowAnonymous] // إذا كان هذا الـendpoint متاحاً للعامة (مثلاً للتحقق من رابط)
-        [Authorize(Policy = "token_validate")] // تتطلب صلاحية التحقق من التوكنات (إذا كان للمصادقين)
-        public async Task<IActionResult> ValidateBookingToken([FromBody] ValidateBookingTokenDto dto)
+        /// <param name="dto">DTO containing token creation details (UserId, ExpirationMinutes, BookingId).</param>
+        /// <returns>A TokenDto of the newly created token.</returns>
+        [HttpPost("create")]
+        [Authorize(Policy = "TOKEN_CREATE")] // تتطلب صلاحية إنشاء توكنات
+        public async Task<IActionResult> CreateToken([FromBody] CreateTokenDto dto)
         {
             if (!ModelState.IsValid)
             {
@@ -70,7 +95,41 @@ namespace Presentation.Controllers
             }
             try
             {
-                var result = await _tokenService.ValidateBookingTokenAsync(dto);
+                // إذا لم يتم تحديد UserId في DTO، يمكن أخذه من المستخدم المصادق عليه
+                // string authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                // dto.UserId = dto.UserId ?? authenticatedUserId; 
+
+                var newToken = await _tokenService.CreateCustomTokenAsync(dto);
+                return StatusCode(201, newToken); // HTTP 201 Created
+            }
+            catch (KeyNotFoundException ex) // إذا كان المستخدم (UserId) أو الحجز (BookingId) غير موجود
+            {
+                return NotFound(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred while creating the token.", Details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Validates a submitted token for a specific user.
+        /// This endpoint might be [AllowAnonymous] if validation happens externally (e.g., via email link).
+        /// </summary>
+        /// <param name="dto">DTO containing user ID and the token string.</param>
+        /// <returns>Success message or detailed failure reasons.</returns>
+        [HttpPost("validate")]
+        // [AllowAnonymous] // يمكن جعله متاحاً للعامة إذا كانت عملية التحقق لا تتطلب تسجيل دخول
+        [Authorize(Policy = "TOKEN_VALIDATE")] // تتطلب صلاحية التحقق من التوكنات (إذا كان للمصادقين)
+        public async Task<IActionResult> ValidateToken([FromBody] ValidateBookingTokenDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            try
+            {
+                var result = await _tokenService.ValidateCustomTokenAsync(dto);
                 if (result.Succeeded)
                 {
                     return Ok(new { Message = "Token validated successfully." });
@@ -85,39 +144,42 @@ namespace Presentation.Controllers
         }
 
         /// <summary>
-        /// Retrieves active tokens for a booking (e.g., for admin review).
+        /// Retrieves active tokens for a user by their ID and/or BookingId (e.g., for admin review).
         /// Requires 'token_browse' permission.
         /// </summary>
-        /// <param name="bookingId">The ID of the booking.</param>
+        /// <param name="userId">The ID of the user whose tokens are to be retrieved.</param>
+        /// <param name="bookingId">The ID of the booking (optional filter).</param>
         /// <returns>A list of TokenDto.</returns>
-        [HttpGet("by-booking/{bookingId}")]
-        [Authorize(Policy = "token_browse")] // تتطلب صلاحية تصفح التوكنات
-        public async Task<IActionResult> GetBookingTokens(Guid bookingId)
+        [HttpGet("active-by-user")]
+        [Authorize(Policy = "TOKEN_BROWSE")] // تتطلب صلاحية تصفح التوكنات
+        public async Task<IActionResult> GetActiveTokensByUserId([FromQuery] string userId, [FromQuery] Guid? bookingId = null)
         {
             try
             {
-                var tokens = await _tokenService.GetBookingTokensAsync(bookingId);
+                // يمكن إضافة تحقق هنا: هل المستخدم المصادق عليه له صلاحية رؤية توكنات مستخدم آخر؟
+                // مثلاً: إذا لم يكن Admin، يجب أن يكون userId هو User.FindFirstValue(ClaimTypes.NameIdentifier)
+                var tokens = await _tokenService.GetActiveTokensByUserIdAndBookingIdAsync(userId, bookingId);
                 return Ok(tokens);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "An error occurred while retrieving booking tokens.", Details = ex.Message });
+                return StatusCode(500, new { Message = "An error occurred while retrieving active tokens.", Details = ex.Message });
             }
         }
 
         /// <summary>
-        /// Cleans up expired tokens from the database. (Admin-level trigger)
+        /// Cleans up expired and used tokens from the database. (Admin-level trigger)
         /// Requires 'token_delete' permission.
         /// </summary>
         /// <returns>Number of tokens cleaned up.</returns>
-        [HttpDelete("cleanup-expired")]
-        [Authorize(Policy = "token_delete")] // تتطلب صلاحية حذف التوكنات
-        public async Task<IActionResult> CleanupExpiredTokens()
+        [HttpDelete("cleanup-expired-used")]
+        [Authorize(Policy = "TOKEN_DELETE")] // تتطلب صلاحية حذف التوكنات
+        public async Task<IActionResult> CleanupExpiredAndUsedTokens()
         {
             try
             {
                 var count = await _tokenService.CleanupExpiredTokensAsync();
-                return Ok(new { Message = $"Cleaned up {count} expired tokens." });
+                return Ok(new { Message = $"Cleaned up {count} expired or used tokens." });
             }
             catch (Exception ex)
             {

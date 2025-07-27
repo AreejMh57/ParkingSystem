@@ -30,6 +30,19 @@ namespace Application.Mapping
                 .ForMember(dest => dest.SensorId, opt => opt.Ignore()) 
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore()) 
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
+
+            // <--- إضافة ربط لـSensorStatusReportDto --->
+            CreateMap<SensorStatusReportDto, Sensor>()
+                .ForMember(dest => dest.SensorId, opt => opt.MapFrom(src => src.SensorId))
+                .ForMember(dest => dest.IsOccupied, opt => opt.MapFrom(src => src.IsOccupied))
+               // .ForMember(dest => dest.LastUpdated, opt => opt.MapFrom(src => src.EventTimestamp))
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore()) // ليس جزءاً من التقرير
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore()) // يتم تحديثه يدوياً
+                .ForMember(dest => dest.SensorType, opt => opt.Ignore()) // ليس جزءاً من التقرير
+                .ForMember(dest => dest.AccountStatus, opt => opt.Ignore()) // ليس جزءاً من التقرير
+                .ForMember(dest => dest.GarageId, opt => opt.Ignore()) // ليس جزءاً من التقرير
+                .ForMember(dest => dest.Garage, opt => opt.Ignore()); // Navigation Property
+
         }
     }
 }

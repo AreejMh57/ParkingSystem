@@ -198,6 +198,12 @@ namespace Infrastructure.Contexts
                 .WithOne(r => r.Permission)
                 .HasForeignKey(r => r.PermissionId)
                 .OnDelete(DeleteBehavior.Restrict);
+            // 10. User -> Token (One-to-Many) --->
+            modelBuilder.Entity<User>() 
+                .HasMany(u => u.Tokens) 
+                .WithOne(t => t.User)
+                .HasForeignKey(t => t.UserId) 
+                .OnDelete(DeleteBehavior.Cascade);
 
 
         }

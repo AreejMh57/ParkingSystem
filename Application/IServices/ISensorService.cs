@@ -37,5 +37,16 @@ namespace Application.IServices
         // Deletes a sensor record from the system. (Admin-level operation)
      
         Task<bool> DeleteSensorAsync(Guid sensorId);
+
+        /// <summary>
+        /// Handles a status report from a sensor (e.g., occupied/free, check-in/check-out).
+        /// This method will update the sensor's state and potentially related booking/garage data.
+        /// </summary>
+        /// <param name="dto">DTO containing sensor report details.</param>
+        /// <returns>True if the report was processed successfully.</returns>
+        /// <exception cref="KeyNotFoundException">Thrown if sensor or related entities not found.</exception>
+        /// <exception cref="UnauthorizedAccessException">Thrown if SensorKey is invalid.</exception>
+        /// <exception cref="InvalidOperationException">Thrown for business rule violations (e.g., trying to check-in an invalid booking).</exception>
+        Task<bool> ReportSensorStatusAsync(SensorStatusReportDto dto);
     }
 }

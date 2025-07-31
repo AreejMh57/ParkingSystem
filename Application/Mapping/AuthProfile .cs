@@ -31,7 +31,7 @@ namespace Application.Mapping
               //  .ForMember(dest => dest.WalletId, opt => opt.MapFrom(src => src.Wallet != null ? src.Wallet.WalletId : (Guid?)null))
             // تأكد أن UserDto لديه خاصية WalletId من نوع Guid?
 
-             .ForMember(dest => dest.Token, opt => opt.Ignore());
+             .ForMember(dest => dest.value, opt => opt.Ignore());
         }
     }  
     }

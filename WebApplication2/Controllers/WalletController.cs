@@ -27,7 +27,7 @@ namespace Presentation.Controllers
         /// </summary>
         /// <returns>A WalletDto of the user's wallet.</returns>
         [HttpGet("my-wallet")]
-        [Authorize(Policy = "WALLET_BROWSE")]
+      //  [Authorize(Policy = "WALLET_BROWSE")]
         public async Task<IActionResult> GetMyWallet()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -41,7 +41,7 @@ namespace Presentation.Controllers
             {
                 return NotFound(new { Message = "Wallet not found for this user. It might need to be created." });
             }
-            return Ok(wallet);
+            return Ok(wallet.Balance);
         }
 
         /// <summary>

@@ -80,7 +80,7 @@ namespace Presentation.Controllers
         }
     
         /// <summary>
-        /// Creates and stores a new custom token for a specific user and booking.
+        /// Creates and stores a new custom token for a specific user and booking
         /// Requires 'token_create' permission.
         /// </summary>
         /// <param name="dto">DTO containing token creation details (UserId, ExpirationMinutes, BookingId).</param>

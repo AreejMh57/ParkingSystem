@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "..\Applicati
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Peresentation", "..\WebApplication2\Peresentation.csproj", "{864B9D42-A96C-41F7-9521-73E2B6E434DD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dashbored", "Dashbored\Dashbored.csproj", "{595C46BA-4E48-42FC-AB97-B8FED1562F9D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{864B9D42-A96C-41F7-9521-73E2B6E434DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{864B9D42-A96C-41F7-9521-73E2B6E434DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{864B9D42-A96C-41F7-9521-73E2B6E434DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{595C46BA-4E48-42FC-AB97-B8FED1562F9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{595C46BA-4E48-42FC-AB97-B8FED1562F9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{595C46BA-4E48-42FC-AB97-B8FED1562F9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{595C46BA-4E48-42FC-AB97-B8FED1562F9D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

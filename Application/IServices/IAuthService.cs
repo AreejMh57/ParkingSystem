@@ -10,7 +10,7 @@ namespace Application.IServices
 {
    public interface IAuthService
     {
-        Task<IdentityResult> CreateAccountAsync(RegisterDto dto);
+        Task<string?> CreateAccountAsync(RegisterDto dto);
          Task<UserDto> SignInAsync(loginDto dto);
        
         

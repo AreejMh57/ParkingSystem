@@ -1,4 +1,4 @@
-
+ï»¿
 using Domain.Entities;
 using Domain.IRepositories;
 using Infrastructure;
@@ -25,7 +25,7 @@ using Infrastructure.seeds.PermissionData;
 
 
 var builder = WebApplication.CreateBuilder(args);
-//builder.WebHost.UseUrls("http://0.0.0.0:5000", "https://0.0.0.0:5001");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
@@ -46,12 +46,12 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 
 builder.Services.AddAuthorization(options =>
 {
-    // ÌáÈ ÌãíÚ ÇáÕáÇÍíÇÊ ÇáãæáÏÉ ÈæÇÓØÉ PermissionGenerator
-    // ÊÃßÏ Ãä PermissionGenerator.GenerateAll() íæáÏ ÇáÃÓãÇÁ ÈÃÍÑÝ ßÈíÑÉ (ãËáÇð WALLET_CREATE)
+    // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ PermissionGenerator
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ PermissionGenerator.GenerateAll() ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ WALLET_CREATE)
     var allPermissions = PermissionGenerator.GenerateAll();
 
-    // ÅÖÇÝÉ ßá ÕáÇÍíÉ ßÓíÇÓÉ (Policy) Ýí äÙÇã ÇáÊÑÎíÕ
-    foreach (var permission in allPermissions)
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (Policy) ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   foreach (var permission in allPermissions)
     {
         options.AddPolicy(permission.Name, policy =>
         {
@@ -59,7 +59,7 @@ builder.Services.AddAuthorization(options =>
         });
     }
 });
-
+  
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
@@ -87,34 +87,38 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("myAllowSpecificOrigins",
+        builder =>
+        {
+            builder.WithOrigins(
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "http://192.168.137.1:8080"
+                ).AllowAnyHeader().AllowAnyMethod();
+        });
+});
 
-//builder.Services.AddCors(options =>
-//{
-  //  options.AddPolicy("AllowFlutter", policy =>
-    //{
-      //  policy.WithOrigins(
-                //      "http://localhost",       // ááÊØæíÑ ÇáãÍáí
-         //       "http://192.168.96.230"// ãËÇá: IP ÌåÇÒ Flutter
-                                       //   "http://<Public_IP>"     // ÅÐÇ ßÇä ÇáæÕæá ÚÈÑ ÇáÅäÊÑäÊ
-           // )
+/*
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        policyBuilder => policyBuilder.WithOrigins(
+                            // ... Ø¨Ù‚ÙŠØ© Ø§Ù„Ø£ØµÙˆÙ„ Ø§Ù„Ù…ÙˆØ¬ÙˆØ¯Ø© Ù„Ø¯ÙŠÙƒ ...
+                            "https://0.0.0.0:5000" ,  // Ù„Ù„Ù€Swagger/Front-end Ø§Ù„Ù…Ø­Ù„ÙŠ HTTPS
+                            "http://0.0.0.0:5001"   // Ù„Ù„Ù€Swagger/Front-end Ø§Ù„Ù…Ø­Ù„ÙŠ HTTP
+)
+                           
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
+});*/
 
-            //AllowAnyHeader()
-            //.AllowAnyMethod();
-  //  });
-//});
-//builder.Services.AddCors(options =>
-//{
-// options.AddPolicy("AllowSpecificOrigin",
-//   builder => builder.WithOrigins("https://localhost:7169") 
-//                     .AllowAnyHeader()
-//                    .AllowAnyMethod());
-//});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi                                                                                                                                                          
 builder.Services.AddOpenApi();
 
 
 var app = builder.Build();
-app.UseCors("AllowFlutter");
 app.UseHttpsRedirection();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -125,10 +129,11 @@ if (app.Environment.IsDevelopment())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(); // áÊÝÚíá æÇÌåÉ ÇáãÓÊÎÏã ÇáÊÝÇÚáíÉ (Swagger UI)
+    app.UseSwaggerUI(); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (Swagger UI)
 }
 app.UseRouting();
 app.UseCors("AllowSpecificOrigin");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -151,7 +156,6 @@ using (var scope = app.Services.CreateScope())
 
     await PermissionSeeder.SeedPermissionsAndAssignToRolesAsync(context, roleManager);
 }
-
 
 
 

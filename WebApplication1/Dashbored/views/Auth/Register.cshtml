@@ -1,0 +1,40 @@
+﻿@model Application.DTOs.RegisterDto
+@{
+    ViewData["Title"] = "Admin Register";
+    Layout = "_Layout";
+}
+
+<h2 style="text-align: center; color: #333; margin-top: 50px;">تسجيل حساب جديد</h2>
+
+<form asp-controller="Auth" asp-action="Register" method="post" style="max-width: 400px; margin: 20px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+    <div asp-validation-summary="All" class="text-danger" style="color: red; margin-bottom: 15px;"></div>
+    
+    <div style="margin-bottom: 15px;">
+        <label asp-for="Email" style="display: block; margin-bottom: 5px; font-weight: bold;">البريد الإلكتروني:</label>
+        <input asp-for="Email" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" />
+        <span asp-validation-for="Email" class="text-danger" style="color: red; font-size: 0.9em; margin-top: 5px; display: block;"></span>
+    </div>
+    <div style="margin-bottom: 15px;">
+        <label asp-for="Password" style="display: block; margin-bottom: 5px; font-weight: bold;">كلمة المرور:</label>
+        <input asp-for="Password" type="password" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" />
+        <span asp-validation-for="Password" class="text-danger" style="color: red; font-size: 0.9em; margin-top: 5px; display: block;"></span>
+    </div>
+    <div style="margin-bottom: 15px;">
+        <label asp-for="ConfirmPassword" style="display: block; margin-bottom: 5px; font-weight: bold;">تأكيد كلمة المرور:</label>
+        <input asp-for="ConfirmPassword" type="password" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" />
+        <span asp-validation-for="ConfirmPassword" class="text-danger" style="color: red; font-size: 0.9em; margin-top: 5px; display: block;"></span>
+    </div>
+    <div style="margin-bottom: 15px;">
+        <label asp-for="Role" style="display: block; margin-bottom: 5px; font-weight: bold;">الدور:</label>
+        @* يمكنك استخدام <select> هنا إذا أردت خيارات أدوار محددة *@
+        <input asp-for="Role" class="form-control" value="Customer" readonly style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; background-color: #eee;" />
+        <span asp-validation-for="Role" class="text-danger" style="color: red; font-size: 0.9em; margin-top: 5px; display: block;"></span>
+    </div>
+    <div style="text-align: center;">
+        <button type="submit" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">تسجيل</button>
+    </div>
+</form>
+
+<div style="text-align: center; margin-top: 20px;">
+    <p>لديك حساب بالفعل؟ <a asp-controller="Auth" asp-action="Login">سجل الدخول</a></p>
+</div>

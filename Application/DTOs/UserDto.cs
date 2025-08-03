@@ -21,8 +21,8 @@ namespace Application.DTOs
         
         public  String value   {get; set; }
 
-        public DateTime validFrom  { get; set; }
-        public DateTime validTo { get; set; }
+      //  public DateTime validFrom  { get; set; }
+      //  public DateTime validTo { get; set; }
 
     }
 }

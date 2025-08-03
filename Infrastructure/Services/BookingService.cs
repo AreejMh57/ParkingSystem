@@ -8,6 +8,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using Infrastructure.Contexts;
+
 
 namespace Infrastructure.Services
 {
@@ -18,21 +21,102 @@ namespace Infrastructure.Services
         private readonly IWalletService _walletService; // Injected Wallet Service
         private readonly ILogService _logService;       // Injected Log Service
         private readonly IMapper _mapper;               // Injected AutoMapper
+        private readonly AppDbContext _context;
 
         public BookingService(
             IRepository<Booking> bookingRepo,
             IRepository<Garage> garageRepo,
             IWalletService walletService,
             ILogService logService,
-            IMapper mapper)
+            IMapper mapper,
+            AppDbContext context)
         {
             _bookingRepo = bookingRepo;
             _garageRepo = garageRepo;
             _walletService = walletService;
             _logService = logService;
             _mapper = mapper;
+            _context = context;
         }
 
+        /*
+        public async Task<BookingDto> CreateBookingBegainAsync(CreateBookingDto dto)
+        {
+            // <--- بداية الـTransaction لضمان الذرية في كل العمليات الأساسية للحجز --->
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                 //   _logger.LogInformation("Attempting to create booking for User {UserId} in Garage {GarageId} (simplified logic).", dto.UserId, dto.GarageId);
+
+                    // 1. التحقق من صحة المدخلات الأساسية
+                    if (dto.StartTime >= dto.EndTime)
+                    {
+                        throw new InvalidOperationException("Booking start time must be before end time.");
+                    }
+
+                    // 2. التحقق من وجود المستخدم والكراج
+                    var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == dto.UserId);
+                    if (user == null) { throw new KeyNotFoundException($"User with ID {dto.UserId} not found."); }
+
+                    var garage = await _garageRepo.GetByIdAsync(dto.GarageId);
+                    if (garage == null) { throw new KeyNotFoundException($"Garage with ID {dto.GarageId} not found."); }
+
+                    // 3. التحقق من توفر المكان في الكراج خلال المدة المذكورة (فقط المتاح تماماً)
+                    var conflictingBookingsCount = await _context.Bookings
+                        .Where(b => b.GarageId == dto.GarageId &&
+                                    b.BookingStatus != Booking.Status.Canceled &&
+                                    (dto.StartTime < b.EndTime && dto.EndTime > b.StartTime))
+                        .CountAsync();
+
+                    var currentAvailableSpots = garage.Capacity - conflictingBookingsCount;
+                    if (currentAvailableSpots <= 0)
+                    {
+                        throw new InvalidOperationException("No available spots in the garage for the selected period.");
+                    }
+
+                    // <--- المنطق المعقد (الدفع، التوكن) تم إزالته هنا --->
+                    // لا يوجد خصم للمحفظة، لا يوجد تسجيل لعملية دفع، لا يوجد توليد لتوكن الوصول للحساس
+
+                    // 4. إنشاء كائن الحجز
+                    var booking = _mapper.Map<Booking>(dto);
+                    booking.BookingId = Guid.NewGuid(); // <--- توليد BookingId جديد من الـBackend
+                    booking.TotalPrice = 0.00M; // السعر سيكون صفر لأنه لا يوجد خصم مالي هنا
+                    booking.BookingStatus = Booking.Status.Pending; // الحالة الأولية قيد الانتظار
+                    booking.CreatedAt = DateTime.UtcNow;
+                    booking.UpdatedAt = DateTime.UtcNow;
+
+                    _bookingRepo.AddAsync(booking);
+                    await _bookingRepo.SaveChangesAsync(); // حفظ الحجز
+
+                    // 5. تحديث الأماكن المتاحة في الكراج (تقليل عددها)
+                    garage.AvailableSpots--;
+                    _garageRepo.Update(garage);
+                    await _garageRepo.SaveChangesAsync();
+
+                    // <--- تأكيد (Commit) الـTransaction بعد نجاح إنشاء الحجز وتحديث الكراج --->
+                    await transaction.CommitAsync();
+                  //  _logger.LogInformation("Simplified Booking {BookingId} created successfully for User {UserId} in Garage {GarageId}.", booking.BookingId, dto.UserId, dto.GarageId);
+
+                    return _mapper.Map<BookingDto>(booking); // إرجاع BookingDto
+                }
+                catch (Exception ex)
+                {
+                    // في حال حدوث أي خطأ، تراجع عن الـTransaction
+                    await transaction.RollbackAsync();
+                //    _logger.LogError(ex, "Simplified Booking creation failed for User {UserId} in Garage {GarageId}. Transaction rolled back. Error: {Message}", dto.UserId, dto.GarageId, ex.Message);
+                    throw; // أعد رمي الاستثناء ليتم التعامل معه في Controller
+                }
+            } // نهاية using transaction
+        }
+
+        */
+        /// <summary>
+        /// ///
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         // Returns BookingDto
         public async Task<BookingDto> CreateBookingAsync(CreateBookingDto dto)
         {
@@ -169,4 +253,5 @@ namespace Infrastructure.Services
             return _mapper.Map<BookingDto>(booking);
         }
     }
+
 }

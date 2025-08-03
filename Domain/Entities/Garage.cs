@@ -12,6 +12,10 @@ namespace Domain.Entities
 
         [Required]
         public string Location { get; set; }
+        // <--- إضافة خصائص الموقع هنا --->
+        public double? Latitude { get; set; } // خط العرض (يمكن أن يكون nullable إذا لم يكن مطلوباً دائماً)
+        public double? Longitude { get; set; } // خط الطول (يمكن أن يكون nullable إذا لم يكن مطلوباً دائماً)
+
 
         [Required]
         [Range(1, int.MaxValue)]

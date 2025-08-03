@@ -21,6 +21,7 @@ using System;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using Infrastructure.seeds.PermissionData;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 
 
@@ -35,6 +36,7 @@ builder.Services.AddHttpClient<ILoggingClient, LoggingClient>(client =>
 {
     client.BaseAddress = new Uri("https://your-log-api.com/");
 });
+
 // ASP.NET Core Identity setup (includes UserManager, SignInManager, RoleManager)
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
@@ -59,9 +61,35 @@ builder.Services.AddAuthorization(options =>
         });
     }
 });
-  
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        // These values must EXACTLY MATCH the ones used to create the token
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"], // e.g., "https://your-api.com"
+
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["Jwt:Audience"], // e.g., "https://your-app.com"
+
+        ValidateLifetime = true, // Checks for token expiration
+
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
+
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+
+builder.Services.AddScoped<Domain.IRepositories.IBookingRepository, Infrastructure.Repositories.BookingRepository>();
+
 
 builder.Services.AddScoped<Infrastructure.Authentication.IJwtTokenGenerator, Infrastructure.Authentication.JwtTokenGenerator>();
 
@@ -148,13 +176,13 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
 
     var context = services.GetRequiredService<AppDbContext>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+   var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = services.GetRequiredService<UserManager<User>>();
 
 
     await IdentitySeeder.SeedRolesAndAdminUserAsync(userManager, roleManager, context);
 
-    await PermissionSeeder.SeedPermissionsAndAssignToRolesAsync(context, roleManager);
+  await PermissionSeeder.SeedPermissionsAndAssignToRolesAsync(context, roleManager);
 }
 
 

@@ -1,143 +1,115 @@
-﻿// Presentation/Controllers/AuthController.cs
+﻿// Dashboard/Controllers/AuthController.cs
+using Application.DTOs; // تأكد من أن هذا المسار صحيح لـ RegisterDto و LoginDto
+using Application.IServices; // تأكد من أن هذا المسار صحيح لـ IAuthService
 using Microsoft.AspNetCore.Mvc;
-using Application.IServices; // لـIAuthService
-using Application.DTOs; // لـLoginDto, RegisterDto, UserDto
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization; // لـ[AllowAnonymous] و [Authorize]
-using Microsoft.AspNetCore.Authentication; // لـSignOutAsync
+using Microsoft.Extensions.Logging; // أضف هذه المكتبة لتسجيل الأخطاء
 
-namespace Dashbored.Controllers
+namespace Dashboard.Controllers // استبدل YourProject باسم مشروعك
 {
-    // [Route("[controller]")] // يمكنك استخدام هذا إذا كنت تفضل Web API-style routing
     public class AuthController : Controller
     {
         private readonly IAuthService _authService;
+        private readonly ILogger<AuthController> _logger; // لحقن مسجل الأخطاء
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, ILogger<AuthController> logger)
         {
             _authService = authService;
+            _logger = logger;
         }
 
-        // --- صفحة تسجيل الدخول (GET) ---
-        [HttpGet]
-        [AllowAnonymous] // للسماح بالوصول لهذه الصفحة بدون مصادقة
-        public IActionResult Login(string returnUrl = null)
-        {
-            ViewData["ReturnUrl"] = returnUrl;
-            return View(); // سيبحث عن Views/Auth/Login.cshtml
-        }
-
-        // --- معالجة طلب تسجيل الدخول (POST) ---
-        [HttpPost]
-        [AllowAnonymous]
-        [ValidateAntiForgeryToken] // حماية ضد هجمات CSRF
-        public async Task<IActionResult> Login(loginDto model, string returnUrl = null)
-        {
-            ViewData["ReturnUrl"] = returnUrl;
-            if (!ModelState.IsValid)
-            {
-                // إذا كانت البيانات المدخلة غير صحيحة (مثلاً، حقول فارغة بسبب [Required])
-                return View(model);
-            }
-
-            // استدعاء خدمة المصادقة
-            var userDto = await _authService.SignInAsync(model);
-
-            if (userDto == null)
-            {
-                ModelState.AddModelError(string.Empty, "Invalid Login Attempt.");
-                return View(model);
-            }
-
-            // إذا نجح تسجيل الدخول، يتم الآن تخزين معلومات المستخدم والتوكن
-            // في MVC، عادة ما يتم استخدام Cookies للمصادقة بعد الحصول على التوكن.
-            // يمكنك تعيين الـJWT Token كـCookie آمن (HttpOnly) هنا إذا كنت تعتمد على الكوكيز للمصادقة
-            // أو إعادته إلى الواجهة الأمامية إذا كنت تستخدم JS لـclient-side token storage.
-            // مثال لتعيين كوكي:
-            // Response.Cookies.Append("AuthToken", userDto.value, new CookieOptions
-            // {
-            //     HttpOnly = true,
-            //     Secure = true, // يجب أن يكون true في بيئة الإنتاج مع HTTPS
-            //     Expires = DateTime.UtcNow.AddHours(1) // مدة صلاحية الكوكي
-            // });
-
-            // في سيناريو MVC النموذجي، بعد SignInAsync، ستقوم ASP.NET Identity
-            // بإعداد الـAuthentication Cookie تلقائيًا.
-            // بما أن AuthService يستخدم SignInManager، فإن هذا الجزء يتم معالجته
-            // بواسطة Identity نفسه. كل ما تحتاجه هو توجيه المستخدم.
-
-            if (Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-            else
-            {
-                // التوجيه إلى لوحة التحكم أو الصفحة الرئيسية بعد تسجيل الدخول الناجح
-                return RedirectToAction("Index", "Dashboard");
-            }
-        }
-
-        // --- صفحة التسجيل (GET) ---
-        [HttpGet]
-        [AllowAnonymous]
+        // GET: لعرض صفحة التسجيل
         public IActionResult Register()
         {
-            return View(); // سيبحث عن Views/Auth/Register.cshtml
+            return View();
         }
 
-        // --- معالجة طلب التسجيل (POST) ---
+        // POST: لمعالجة بيانات التسجيل المرسلة
         [HttpPost]
-        [AllowAnonymous]
-        [ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken] // حماية ضد هجمات CSRF
         public async Task<IActionResult> Register(RegisterDto model)
         {
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                return View(model);
+                try
+                {
+                    var token = await _authService.CreateAccountAsync(model);
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        // تم التسجيل بنجاح، يمكنك الآن إعادة توجيه المستخدم
+                        // مثلاً إلى صفحة الدخول أو مباشرة إلى لوحة التحكم
+                        _logger.LogInformation("User {Email} registered successfully.", model.Email);
+                        // بعد التسجيل الناجح، قم بتسجيل الدخول تلقائيًا أو اطلب منهم تسجيل الدخول
+                        return RedirectToAction("Login", "Auth"); // أعد التوجيه إلى صفحة الدخول
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "Registration failed. Please try again.");
+                        _logger.LogWarning("Registration failed for {Email}. AuthService returned null token.", model.Email);
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    _logger.LogError(ex, "Error during user registration for {Email}.", model.Email);
+                    ModelState.AddModelError(string.Empty, "An unexpected error occurred during registration.");
+                }
             }
-
-            if (model.Password != model.ConfirmPassword)
-            {
-                ModelState.AddModelError(string.Empty, "Password and confirmation password do not match.");
-                return View(model);
-            }
-
-            var result = await _authService.CreateAccountAsync(model);
-
-            if (result.Succeeded)
-            {
-                // بعد التسجيل الناجح، قم بتوجيه المستخدم لتسجيل الدخول
-                // أو قم بتسجيل دخوله تلقائياً إذا كان هذا هو منطق عملك
-                return RedirectToAction("Login", "Auth"); // توجيه لصفحة تسجيل الدخول
-            }
-
-            // إذا فشل التسجيل، أضف الأخطاء إلى ModelState
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
+            // إذا لم يكن النموذج صالحاً أو فشل التسجيل، أعد عرض النموذج مع الأخطاء
             return View(model);
         }
 
-        // --- تسجيل الخروج (POST) ---
+        // GET: لعرض صفحة الدخول
+        public IActionResult Login(string returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+        // POST: لمعالجة بيانات الدخول المرسلة
         [HttpPost]
-        [Authorize] // يتطلب المستخدم أن يكون مصادقاً لتسجيل الخروج
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(loginDto model, string returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var userDto = await _authService.SignInAsync(model);
+                    if (userDto != null)
+                    {
+                        _logger.LogInformation("User {Email} logged in successfully.", model.Email);
+                        // تم الدخول بنجاح، أعد التوجيه إلى لوحة التحكم
+                        if (Url.IsLocalUrl(returnUrl))
+                        {
+                            return Redirect(returnUrl);
+                        }
+                        return RedirectToAction("Index", "Home"); // توجيه إلى صفحة Dashboard الرئيسية
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                        _logger.LogWarning("Login failed for {Email}. Invalid credentials.", model.Email);
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    _logger.LogError(ex, "Error during user login for {Email}.", model.Email);
+                    ModelState.AddModelError(string.Empty, "An unexpected error occurred during login.");
+                }
+            }
+            // إذا لم يكن النموذج صالحاً أو فشل الدخول، أعد عرض النموذج مع الأخطاء
+            return View(model);
+        }
+
+        // POST: لتسجيل الخروج
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await _authService.LogoutAsync();
-            // بعد تسجيل الخروج، أزل الكوكي الذي يحتوي على التوكن إذا كنت تستخدمه يدوياً
-            // Response.Cookies.Delete("AuthToken");
-            return RedirectToAction("Index", "Home"); // أو صفحة تسجيل الدخول
-        }
-
-        // --- رسالة الوصول المرفوض (إذا حاول مستخدم غير مصادق الوصول إلى صفحة محمية) ---
-        [HttpGet]
-        [AllowAnonymous]
-        public IActionResult AccessDenied()
-        {
-            return View(); // سيبحث عن Views/Auth/AccessDenied.cshtml
+            _logger.LogInformation("User logged out successfully.");
+            return RedirectToAction("Login", "Auth"); // أعد التوجيه إلى صفحة الدخول بعد تسجيل الخروج
         }
     }
 }

@@ -23,5 +23,7 @@ namespace Application.IServices
         Task<IdentityResult> CancelBookingAsync(Guid bookingId, string userId);
 
         Task<BookingDto> GetBookingByIdAsync(Guid bookingId);
+        //   Task<BookingDto?> CheckBookingAvailabilityAsync(BookingDto dto);
+     //   Task<BookingDto> CreateBookingBegainAsync(CreateBookingDto dto);
     }
 }

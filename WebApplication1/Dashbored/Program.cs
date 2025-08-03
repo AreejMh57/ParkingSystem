@@ -102,7 +102,8 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddEndpointsApiExplorer();
 //builder.Services.AddSwaggerGen();
-builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
+
 
 //builder.Services.AddCors(options =>
 //{
@@ -130,21 +131,34 @@ builder.Services.AddControllers();
 
 
 var app = builder.Build();
-app.UseCors("AllowFlutter");
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+//app.UseCors("AllowFlutter");
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 // Configure the HTTP request pipeline.
 
 
 ///if (app.Environment.IsDevelopment())
 //{
-    //app.UseSwagger();
-  //  app.UseSwaggerUI(); // · ›⁄Ì· Ê«ÃÂ… «·„” Œœ„ «· ›«⁄·Ì… (Swagger UI)
+//app.UseSwagger();
+//  app.UseSwaggerUI(); // · ›⁄Ì· Ê«ÃÂ… «·„” Œœ„ «· ›«⁄·Ì… (Swagger UI)
 //}
 app.UseRouting();
 app.UseCors("AllowSpecificOrigin");
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 //app.MapControllers();
 //builder.Services.AddControllersWithViews();
 //app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);

@@ -14,9 +14,16 @@ namespace Application.IServices
         Task<GarageDto> AddGarageAsync(CreateGarageDto CreateGarageDto);
         Task<GarageDto> UpdateGarageAsync(UpdateGarageDto updateGarageDtO);
         Task<IEnumerable<GarageDto>> GetAllGaragesAsync();
-        Task<IEnumerable<GarageDto>> SearchGaragesAsync(string? city = null, int? minAvailableSpots = null, bool? isActive = null);
+        Task<IEnumerable<GarageDto>> SearchGaragesAsync(DateTime StartTime, DateTime lastTime , string? city = null, int? minAvailableSpots = null, bool? isActive = null );
         Task ToggleGarageStatusAsync(Guid garageId);
         Task<GarageDto> GetGarageByIdAsync(Guid garageId);
         Task DeleteGarageAsync(Guid garageId);
-    }
+        Task<IEnumerable<GarageDto>> GetAvailableGaragesAsync(
+         DateTime arrivalTime,
+         DateTime departureTime,
+         double userLat,
+         double userLon,
+         double? maxDistance);
+    
+}
 }

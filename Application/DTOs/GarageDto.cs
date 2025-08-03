@@ -10,11 +10,13 @@ namespace Application.DTOs
     {
         public Guid GarageId { get; set; }
         public string Name { get; set; }
-        public string Location { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
         public int Capacity { get; set; }
         public decimal PricePerHour { get; set; }
         public string Area { get; set; }
         public int AvailableSpots { get; set; }
-        public bool IsActive { get; set; } 
+        public bool IsActive { get; set; }
+        public double? Distance { get; set; }
     }
 }

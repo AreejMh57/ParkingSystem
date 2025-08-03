@@ -16,7 +16,12 @@ namespace Application.Mapping
                 // إذا كان لديك Latitude/Longitude في DTO/Entity ولم تُظهرها، أضف ForMember لها
                 // .ForMember(dest => dest.Latitude, opt => opt.MapFrom(src => src.Latitude))
                 // .ForMember(dest => dest.Longitude, opt => opt.MapFrom(src => src.Longitude))
-                ;
+                .ForMember(dest => dest.Latitude, opt => opt.MapFrom(src => src.Latitude))
+                .ForMember(dest => dest.Longitude, opt => opt.MapFrom(src => src.Longitude))
+                .ForMember(dest => dest.Distance, opt => opt.Ignore()); // Distance سيتم حسابه في الخدمة، لذا تجاهله هنا
+            ;
+
+            ;
 
             // 2. من CreateGarageDto إلى Garage Entity (للإنشاء)
             CreateMap<CreateGarageDto, Garage>()

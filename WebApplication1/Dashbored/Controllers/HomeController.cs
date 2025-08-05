@@ -1,15 +1,15 @@
-﻿// Dashboard/Controllers/HomeController.cs
-using Microsoft.AspNetCore.Authorization; // لإضافة حماية الوصول
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging; // أضف هذه المكتبة
+using Microsoft.Extensions.Logging; // 1. إضافة هذا السطر
 
-namespace YourProject.Dashboard.Controllers // استبدل YourProject باسم مشروعك
+namespace Dashboard.Controllers
 {
-    // [Authorize] // يمكنك إضافة هذا السطر لحماية المتحكم بالكامل، بحيث لا يمكن الوصول إليه إلا للمستخدمين المسجلين
+    [Authorize] 
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ILogger<HomeController> _logger; // 2. تعريف حقل الـ Logger
 
+        // 3. حقن ILogger في الباني
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
@@ -17,14 +17,23 @@ namespace YourProject.Dashboard.Controllers // استبدل YourProject باسم
 
         public IActionResult Index()
         {
-            _logger.LogInformation("Home page accessed.");
+            // 4. استخدام الـ Logger لتسجيل معلومات عند الوصول إلى الصفحة
+            _logger.LogInformation("User accessed the Home dashboard page.");
+
             return View();
         }
 
-        // يمكنك إضافة إجراءات أخرى للوحة التحكم هنا
+        [AllowAnonymous] 
         public IActionResult Privacy()
         {
-            _logger.LogInformation("Privacy page accessed.");
+            _logger.LogInformation("Privacy page was accessed.");
+            return View();
+        }
+
+        [AllowAnonymous]
+        public IActionResult AccessDenied()
+        {
+            _logger.LogWarning("User attempted to access a restricted resource and was redirected to Access Denied page.");
             return View();
         }
     }

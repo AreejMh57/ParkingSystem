@@ -28,10 +28,10 @@ namespace Application.Mapping
                 .ForMember(dest => dest.TransactionId, opt => opt.Ignore()) // Generated in service
                 .ForMember(dest => dest.TransactionDate, opt => opt.Ignore()) // Set in service
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore()) // Set in service
-                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore()) // Set in service
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());// Set in service
                                                                         // Map properties with different names
-                .ForMember(dest => dest.TransactionType, opt => opt.MapFrom(src => src.Type)) // Map DTO.Type to Entity.TransactionType
-                .ForMember(dest => dest.PaymentStatus, opt => opt.MapFrom(src => src.Status)); // Map DTO.Status to Entity.PaymentStatus
+            //    .ForMember(dest => dest.TransactionType, opt => opt.MapFrom(src => src.Type)) // Map DTO.Type to Entity.TransactionType
+              //  .ForMember(dest => dest.PaymentStatus, opt => opt.MapFrom(src => src.Status)); // Map DTO.Status to Entity.PaymentStatus
         }
     }
 

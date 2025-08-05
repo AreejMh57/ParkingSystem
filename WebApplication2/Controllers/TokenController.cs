@@ -120,7 +120,7 @@ namespace Presentation.Controllers
         /// <returns>Success message or detailed failure reasons.</returns>
         [HttpPost("validate")]
         // [AllowAnonymous] // يمكن جعله متاحاً للعامة إذا كانت عملية التحقق لا تتطلب تسجيل دخول
-        [Authorize(Policy = "TOKEN_VALIDATE")] // تتطلب صلاحية التحقق من التوكنات (إذا كان للمصادقين)
+        //[Authorize(Policy = "TOKEN_VALIDATE")] // تتطلب صلاحية التحقق من التوكنات (إذا كان للمصادقين)
         public async Task<IActionResult> ValidateToken([FromBody] ValidateBookingTokenDto dto)
         {
             if (!ModelState.IsValid)

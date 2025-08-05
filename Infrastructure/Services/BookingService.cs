@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.Contexts;
+using Microsoft.Extensions.Logging;
 
 
 namespace Infrastructure.Services
@@ -22,6 +23,7 @@ namespace Infrastructure.Services
         private readonly ILogService _logService;       // Injected Log Service
         private readonly IMapper _mapper;               // Injected AutoMapper
         private readonly AppDbContext _context;
+        private readonly ILogger<BookingService> _logger;
 
         public BookingService(
             IRepository<Booking> bookingRepo,
@@ -29,7 +31,8 @@ namespace Infrastructure.Services
             IWalletService walletService,
             ILogService logService,
             IMapper mapper,
-            AppDbContext context)
+            AppDbContext context,
+            ILogger<BookingService> logger)
         {
             _bookingRepo = bookingRepo;
             _garageRepo = garageRepo;
@@ -37,6 +40,7 @@ namespace Infrastructure.Services
             _logService = logService;
             _mapper = mapper;
             _context = context;
+            _logger = logger;
         }
 
         /*
@@ -109,8 +113,8 @@ namespace Infrastructure.Services
                 }
             } // نهاية using transaction
         }
-
         */
+
         /// <summary>
         /// ///
         /// </summary>
@@ -118,6 +122,7 @@ namespace Infrastructure.Services
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
         // Returns BookingDto
+        /*
         public async Task<BookingDto> CreateBookingAsync(CreateBookingDto dto)
         {
             // 1. Validate Garage availability
@@ -159,6 +164,7 @@ namespace Infrastructure.Services
                 UpdatedAt = DateTime.UtcNow
             };
 
+
             await _bookingRepo.AddAsync(booking);
             await _bookingRepo.SaveChangesAsync();
 
@@ -173,7 +179,96 @@ namespace Infrastructure.Services
             // Ensure navigation properties (User, Garage) are loaded in the repository for proper mapping.
             return _mapper.Map<BookingDto>(booking);
         }
+        */
+        public async Task<BookingDto> CreateBookingAsync(CreateBookingDto dto)
+        {
+            // يبدأ هنا block الـ 'using' لـ Transaction.
+            // هذا يضمن أن الـ Transaction سيتم التخلص منه (dispose) بشكل صحيح حتى لو حدث خطأ.
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    _logger.LogInformation("Attempting to create temporary booking for User {UserId} in Garage {GarageId}.", dto.UserId, dto.GarageId);
 
+                    // 1. التحقق من صحة المدخلات الأساسية
+                    // يتحقق من أن وقت بدء الحجز يأتي قبل وقت الانتهاء.
+                    if (dto.StartTime >= dto.EndTime)
+                    {
+                        throw new InvalidOperationException("Booking start time must be before end time.");
+                    }
+
+                    // 2. التحقق من وجود المستخدم والكراج
+                    // يبحث عن المستخدم في قاعدة البيانات باستخدام الـ UserId ويتضمن المحفظة (Wallet).
+                    var user = await _context.Users.Include(u => u.Wallet).FirstOrDefaultAsync(u => u.Id == dto.UserId);
+                    // إذا لم يتم العثور على المستخدم، يرمي استثناء.
+                    if (user == null)
+                    {
+                        throw new KeyNotFoundException($"User with ID {dto.UserId} not found.");
+                    }
+
+                    // يبحث عن المرآب (Garage) في قاعدة البيانات باستخدام الـ GarageId.
+                    var garage = await _garageRepo.GetByIdAsync(Guid.Parse(dto.GarageId));
+                    // إذا لم يتم العثور على المرآب، يرمي استثناء.
+                    if (garage == null)
+                    {
+                        throw new KeyNotFoundException($"Garage with ID {dto.GarageId} not found.");
+                    }
+
+                    // 3. التحقق من توافر الأماكن
+                    if (garage.AvailableSpots <= 0)
+                    {
+                        throw new InvalidOperationException("No available spots in the garage.");
+                    }
+
+                    // 4. إنشاء كائن الحجز
+                    // يستخدم AutoMapper لتحويل DTO إلى كائن Booking.
+                    var booking = _mapper.Map<Booking>(dto);
+                    // يولد معرفًا فريدًا جديدًا للحجز.
+                    booking.BookingId = Guid.NewGuid();
+                    // يحدد السعر بـ 0.00 لأن هذا حجز مؤقت.
+                    booking.TotalPrice = 0.00M;
+                    // يحدد حالة الحجز على أنها "قيد الانتظار".
+                    booking.BookingStatus = Booking.Status.Pending;
+                    // يحدد وقت الإنشاء.
+                    booking.CreatedAt = DateTime.UtcNow;
+                    // يحدد وقت التحديث.
+                    booking.UpdatedAt = DateTime.UtcNow;
+
+                    // يضيف كائن الحجز إلى الـ Repository لتحضيره للحفظ.
+                    _bookingRepo.AddAsync(booking);
+                    // يحفظ التغييرات في قاعدة البيانات.
+                    await _bookingRepo.SaveChangesAsync();
+
+                    // 5. تحديث الأماكن المتاحة في الكراج (تقليل عددها)
+                    // يقلل عدد الأماكن المتاحة في المرآب بـ 1.
+                    garage.AvailableSpots--;
+                    // يحدّث كائن المرآب في الـ Repository.
+                    _garageRepo.Update(garage);
+                    // يحفظ التغييرات في قاعدة البيانات.
+                    await _garageRepo.SaveChangesAsync();
+
+                    // <--- تأكيد (Commit) الـTransaction --->
+                    // هنا يتم تأكيد جميع التغييرات التي تمت في الـ Transaction.
+                    await transaction.CommitAsync();
+
+                    _logger.LogInformation("Temporary Booking {BookingId} created successfully for User {UserId} in Garage {GarageId}.", booking.BookingId, dto.UserId, dto.GarageId);
+
+                    // يرجع كائن BookingDto الذي تم إنشاؤه.
+                    return _mapper.Map<BookingDto>(booking);
+                }
+                catch (Exception ex)
+                {
+                    // في حال حدوث أي خطأ، يتم الوصول إلى هذا الـ catch block.
+                    // <--- التراجع (Rollback) عن الـTransaction --->
+                    // يتراجع عن جميع التغييرات التي تمت داخل الـ Transaction، مما يضمن أن قاعدة البيانات تبقى في حالتها الأصلية.
+                    await transaction.RollbackAsync();
+
+                    _logger.LogError(ex, "Temporary Booking creation failed for User {UserId} in Garage {GarageId}. Transaction rolled back. Error: {Message}", dto.UserId, dto.GarageId, ex.Message);
+                    // يعيد رمي الاستثناء ليتم التعامل معه في الطبقة الأعلى (مثل الـ Controller).
+                    throw;
+                }
+            }
+        }
         public async Task<IEnumerable<BookingDto>> GetUserBookingsAsync(string userId)
         {
             var result = await _bookingRepo.FilterByAsync(new Dictionary<string, object> {
@@ -252,6 +347,35 @@ namespace Infrastructure.Services
             // Map the entity to DTO
             return _mapper.Map<BookingDto>(booking);
         }
+
+        // ... داخل صنف BookingService
+
+        public async Task<IEnumerable<BookingDto>> GetAllBookingsAsync()
+        {
+            _logger.LogInformation("Retrieving all bookings for administrative view.");
+
+            // جلب جميع الكيانات (Entities) من الـ Repository
+            // يفترض أن التابع GetAllAsync() موجود في IRepository<T>
+            var bookings = await _bookingRepo.GetAllAsync();
+
+            // إذا كان الـ DTO يحتاج إلى بيانات من جداول مرتبطة (User, Garage)،
+            // ستحتاج إلى طريقة أخرى لجلب البيانات
+            // مثلاً:
+            // var bookingsWithRelatedData = await _context.Bookings
+            //                                       .Include(b => b.User)
+            //                                       .Include(b => b.Garage)
+            //                                       .ToListAsync();
+            // ثم قم بتحويلها باستخدام AutoMapper
+
+            // استخدام AutoMapper لتحويل قائمة الكيانات إلى قائمة من DTOs
+            var bookingDtos = _mapper.Map<IEnumerable<BookingDto>>(bookings);
+
+            _logger.LogDebug("Successfully retrieved {Count} bookings.", bookingDtos.Count());
+
+            return bookingDtos;
+        }
+
+        // ... بقية التوابع
     }
 
 }

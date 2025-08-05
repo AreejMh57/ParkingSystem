@@ -3,6 +3,7 @@ using Domain.Entities;
 using Domain.IRepositories;
 using Infrastructure;
 using Infrastructure.Seeds;
+
 //using Infrastructure.Seeds.PermissionData;
 using Infrastructure.Contexts;
 using Infrastructure.Repositories;
@@ -184,7 +185,6 @@ using (var scope = app.Services.CreateScope())
 
   await PermissionSeeder.SeedPermissionsAndAssignToRolesAsync(context, roleManager);
 }
-
 
 
 

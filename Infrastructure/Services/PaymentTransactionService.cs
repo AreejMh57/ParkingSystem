@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Application.DTOs;
@@ -8,7 +9,10 @@ using Application.IServices;
 using AutoMapper;
 using Domain.Entities;
 using Domain.IRepositories;
+using Infrastructure.Contexts;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services
 {
@@ -21,6 +25,9 @@ namespace Infrastructure.Services
         private readonly IRepository<Wallet> _walletRepo; // Needed for wallet validation
         private readonly IRepository<User> _userRepo; // Needed for user validation
         private readonly UserManager<User> _userManager;
+        private readonly AppDbContext _context;
+   
+        private readonly ILogger<PaymentTransactionService> _logger;
 
         public PaymentTransactionService(
             IRepository<PaymentTransaction> paymentRepo,
@@ -29,7 +36,10 @@ namespace Infrastructure.Services
             IRepository<Booking> bookingRepo,
             IRepository<Wallet> walletRepo,
             IRepository<User> userRepo,
-            UserManager<User> userManager)
+            UserManager<User> userManager,
+             AppDbContext context,
+            ILogger<PaymentTransactionService> logger
+            )
         {
             _paymentRepo = paymentRepo;
             _logService = logService;
@@ -38,8 +48,139 @@ namespace Infrastructure.Services
             _walletRepo = walletRepo;
             _userRepo = userRepo;
             _userManager = userManager;
+            _context = context;
+            _logger = logger;
+            
         }
 
+        public async Task<ConfirmedBookingDto> ConfirmPaymentAndCreateTokenAsync(CreatePaymentTransactionDto dto)
+        {
+            // يبدأ هنا block الـ 'using' لـ Transaction.
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    _logger.LogInformation("Attempting to confirm booking {BookingId} and process payment for User {UserId}.", dto.BookingId, dto.UserId);
+
+                    // 1. التحقق من وجود الحجز والمستخدم
+                    var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == dto.BookingId);
+                    if (booking == null)
+                    {
+                        throw new KeyNotFoundException($"Booking with ID {dto.BookingId} not found.");
+                    }
+                    if (booking.UserId != dto.UserId)
+                    {
+                        throw new UnauthorizedAccessException("Booking does not belong to the specified user.");
+                    }
+
+                    // 2. التحقق من حالة الحجز
+                    if (booking.BookingStatus == Booking.Status.Confirmed)
+                    {
+                        throw new InvalidOperationException("Booking is already confirmed.");
+                    }
+
+                    // 3. التحقق من المحفظة والمبلغ
+                    var wallet = await _context.Wallets.FirstOrDefaultAsync(w => w.UserId == dto.UserId);
+                    if (wallet == null)
+                    {
+                        throw new KeyNotFoundException($"Wallet not found for user with ID {dto.UserId}.");
+                    }
+
+                    if (wallet.Balance < dto.Amount)
+                    {
+                        throw new InvalidOperationException("Insufficient funds in the wallet.");
+                    }
+
+                    // 4. تحديث حالة الحجز
+                    booking.BookingStatus = Booking.Status.Confirmed;
+                    booking.UpdatedAt = DateTime.UtcNow;
+                    _bookingRepo.Update(booking);
+                    await _bookingRepo.SaveChangesAsync();
+
+                    // 5. خصم المبلغ من المحفظة
+                    wallet.Balance -= dto.Amount;
+                    wallet.UpdatedAt = DateTime.UtcNow;
+                    _walletRepo.Update(wallet);
+                    await _walletRepo.SaveChangesAsync();
+
+                    // 6. إنشاء معاملة الدفع (PaymentTransaction)
+                    var paymentTransaction = new PaymentTransaction
+                    {
+                        TransactionId = Guid.NewGuid(),
+                        Amount = dto.Amount,
+                        TransactionType = PaymentTransaction.Type.Payment,
+                        PaymentStatus = PaymentTransaction.Status.Completed,
+                        TransactionDate = DateTime.UtcNow,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                        WalletId = wallet.WalletId,
+                        BookingId = booking.BookingId
+                    };
+                    _context.Add(paymentTransaction);
+                    await _context.SaveChangesAsync();
+
+                    // 7. إنشاء توكن (Token) للحجز
+                    var token = new Token
+                    {
+                        TokenId = Guid.NewGuid(),
+                        Value = GenerateTokenValue(), // تابع لإنشاء قيمة فريدة للتوكن
+                        ValidFrom = booking.StartTime,
+                        ValidTo = booking.EndTime,
+                        BookingId = booking.BookingId,
+                        UserId = dto.UserId,
+                        IsUsed = false,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _context.Tokens.Add(token);
+                    await _context.SaveChangesAsync();
+
+                    // <--- تأكيد (Commit) الـTransaction --->
+                    await transaction.CommitAsync();
+
+                    _logger.LogInformation("Booking {BookingId} successfully confirmed, payment processed, and token created.", booking.BookingId);
+
+                    // 8. إرجاع الـ DTO المدمج
+                    var resultDto = new ConfirmedBookingDto
+                    {
+                        TransactionId = paymentTransaction.TransactionId,
+                        Amount = paymentTransaction.Amount,
+                        TransactionType = paymentTransaction.TransactionType,
+                        PaymentStatus = paymentTransaction.PaymentStatus,
+                        CreatedAt = paymentTransaction.CreatedAt,
+                        WalletId = paymentTransaction.WalletId,
+                        UserId = booking.UserId,
+                        BookingId = booking.BookingId,
+
+                        TokenId = token.TokenId,
+                        TokenValue = token.Value,
+                        TokenValidFrom = token.ValidFrom,
+                        TokenValidTo = token.ValidTo
+                    };
+
+                    return resultDto;
+                }
+                catch (Exception ex)
+                {
+                    // <--- التراجع (Rollback) عن الـTransaction --->
+                    await transaction.RollbackAsync();
+
+                    _logger.LogError(ex, "Failed to confirm booking {BookingId} for User {UserId}. Transaction rolled back. Error: {Message}", dto.BookingId, dto.UserId, ex.Message);
+                    throw;
+                }
+            }
+        }
+        private string GenerateTokenValue()
+        {
+            // يولد توكن فريدًا مكونًا من 16 بايت
+            var bytes = new byte[16];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(bytes);
+            }
+            return Convert.ToBase64String(bytes).Replace("=", "").Replace("+", "-").Replace("/", "_");
+        }
+        /*
         public async Task<PaymentTransactionDto> RecordPaymentAsync(CreatePaymentTransactionDto dto)
         {
             // 1. Validate existence of related entities
@@ -101,7 +242,7 @@ namespace Infrastructure.Services
 
             return _mapper.Map<PaymentTransactionDto>(payment);
         }
-
+        */
         public async Task<IEnumerable<PaymentTransactionDto>> GetUserPaymentHistoryAsync(string userId)
         {
             var payments = await _paymentRepo.FilterByAsync(new Dictionary<string, object> {

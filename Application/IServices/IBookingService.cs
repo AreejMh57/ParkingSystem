@@ -24,6 +24,7 @@ namespace Application.IServices
 
         Task<BookingDto> GetBookingByIdAsync(Guid bookingId);
         //   Task<BookingDto?> CheckBookingAvailabilityAsync(BookingDto dto);
-     //   Task<BookingDto> CreateBookingBegainAsync(CreateBookingDto dto);
+        //   Task<BookingDto> CreateBookingBegainAsync(CreateBookingDto dto);
+        Task<IEnumerable<BookingDto>> GetAllBookingsAsync();
     }
 }

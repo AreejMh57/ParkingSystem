@@ -1,0 +1,57 @@
+﻿@model IEnumerable<Application.DTOs.BookingDto>
+@{
+    ViewData["Title"] = "Manage Bookings";
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5">Bookings Management</h1>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (Model == null || !Model.Any())
+            {
+                <div class="alert alert-info">
+                    No bookings found.
+                </div>
+            }
+            else
+            {
+                <table class="table table-hover table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>User</th>
+                            <th>Garage</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var booking in Model)
+                        {
+                            <tr>
+                                <td>@booking.BookingId.ToString().Substring(0, 8)...</td>
+                                <td>@booking.StartTime.ToString("g")</td>
+                                <td>@booking.EndTime.ToString("g")</td>
+                                <td><span class="badge bg-secondary">@booking.BookingStatus</span></td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@booking.BookingId" class="btn btn-sm btn-info">Details</a>
+                                    <form asp-action="Cancel" asp-route-id="@booking.BookingId" method="post" style="display:inline;"
+                                          onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                                        <input type="hidden" name="bookingId" value="@booking.BookingId" />
+                                        Html.AntiForgeryToken()
+                                     <button type="submit" class="btn btn-sm btn-danger" (booking.BookingStatus == 3 ? "disabled" : "")>Cancel</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>

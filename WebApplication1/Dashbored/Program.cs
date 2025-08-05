@@ -26,16 +26,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.WebHost.UseUrls("https://localhost:7169", "http://localhost:5152");
 
-//builder.WebHost.UseUrls("http://0.0.0.0:5000", "https://0.0.0.0:5001");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-
+/*
 builder.Services.AddHttpClient<ILoggingClient, LoggingClient>(client =>
 {
     client.BaseAddress = new Uri("https://your-log-api.com/");
 });
-// ASP.NET Core Identity setup (includes UserManager, SignInManager, RoleManager)
+// ASP.NET Core Identity setup (includes UserManager, SignInManager, RoleManager)*/
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.User.AllowedUserNameCharacters =
@@ -79,6 +78,8 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+
 builder.Services.AddScoped<Infrastructure.Authentication.IJwtTokenGenerator, Infrastructure.Authentication.JwtTokenGenerator>();
 
 //builder.Services.AddScoped<JwtTokenGenerator>();
@@ -88,21 +89,28 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add services to the container.
 builder.Services.AddScoped<ILogService, LogService>();
+builder.Services.AddHttpClient<ILoggingClient, LoggingClient>(client =>
+{
+    client.BaseAddress = new Uri("https://your-log-api.com/"); //  √ﬂœ „‰  ÕœÌÀ Â–« «·‹ URL
+});
+
+//  ”ÃÌ· AutoMapper (· ÕœÌœ «·‹ Profiles)
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<ISensorService, SensorService>();
+//builder.Services.AddScoped<IUserService, UserService>();
+//builder.Services.AddScoped<ISensorService, SensorService>();
+builder.Services.AddScoped<ILogService, LogService>();
 
 
 builder.Services.AddScoped<IGarageService, GarageService>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<IPermissionService, PermissionService>();
-builder.Services.AddEndpointsApiExplorer();
+//builder.Services.AddScoped<INotificationService, NotificationService>();
+//builder.Services.AddScoped<IPermissionService, PermissionService>();
+//builder.Services.AddEndpointsApiExplorer();
 //builder.Services.AddSwaggerGen();
-builder.Services.AddControllersWithViews();
+//builder.Services.AddControllersWithViews();
 
 
 //builder.Services.AddCors(options =>
@@ -156,6 +164,12 @@ app.UseRouting();
 app.UseCors("AllowSpecificOrigin");
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "auth",
+    pattern: "Auth/{action=Login}/{id?}",
+    defaults: new { controller = "Auth" });
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

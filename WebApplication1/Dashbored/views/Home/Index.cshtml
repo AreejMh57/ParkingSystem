@@ -1,0 +1,80 @@
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container mt-5">
+    <header class="dashboard-header text-center">
+        <h1>Welcome to the Admin Dashboard</h1>
+        <p>Manage your parking system application using the quick access links below.</p>
+    </header>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+
+        <div class="col">
+            <div class="card dashboard-card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column text-center">
+                    <i class="fa-solid fa-warehouse card-icon text-primary"></i>
+                    <h5 class="card-title">Garages</h5>
+                    <p class="card-text">View, add, and manage parking garages and their details.</p>
+                    <a asp-controller="Garage" asp-action="Index" class="btn btn-garages mt-auto">Go to Garages</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card dashboard-card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column text-center">
+                    <i class="fa-solid fa-calendar-check card-icon text-success"></i>
+                    <h5 class="card-title">Bookings</h5>
+                    <p class="card-text">Review and manage all user bookings and reservations.</p>
+                    <a asp-controller="Booking" asp-action="Index" class="btn btn-bookings mt-auto">Go to Bookings</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card dashboard-card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column text-center">
+                    <i class="fa-solid fa-users card-icon text-info"></i>
+                    <h5 class="card-title">Users</h5>
+                    <p class="card-text">Manage user accounts, roles, and permissions.</p>
+                    <a asp-controller="User" asp-action="Index" class="btn btn-users mt-auto">Go to Users</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card dashboard-card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column text-center">
+                    <i class="fa-solid fa-wallet card-icon text-warning"></i>
+                    <h5 class="card-title">Wallets</h5>
+                    <p class="card-text">View and manage user wallet balances and transactions.</p>
+                    <a asp-controller="Wallet" asp-action="Index" class="btn btn-warning mt-auto">Go to Wallets</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card dashboard-card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column text-center">
+                    <i class="fa-solid fa-bell card-icon text-secondary"></i>
+                    <h5 class="card-title">Notifications</h5>
+                    <p class="card-text">Send push notifications and manage notification settings.</p>
+                    <a asp-controller="Notification" asp-action="Index" class="btn btn-secondary mt-auto">Go to Notifications</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card dashboard-card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column text-center">
+                    <i class="fa-solid fa-satellite-dish card-icon text-danger"></i>
+                    <h5 class="card-title">Sensors</h5>
+                    <p class="card-text">Monitor and manage the status of parking sensors.</p>
+                    <a asp-controller="Sensor" asp-action="Index" class="btn btn-danger mt-auto">Go to Sensors</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

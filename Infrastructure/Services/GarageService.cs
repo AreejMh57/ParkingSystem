@@ -78,6 +78,7 @@ namespace Infrastructure.Services
             return _mapper.Map<GarageDto>(garage); // Return the DTO
 
         }
+
         public async Task<IEnumerable<GarageDto>> SearchGaragesAsync(DateTime StartTime, DateTime lastTime,string? city = null, int? minAvailableSpots = null, bool? isActive = null)
         {
             var filters = new Dictionary<string, object>();

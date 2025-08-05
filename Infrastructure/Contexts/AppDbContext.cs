@@ -28,6 +28,7 @@ namespace Infrastructure.Contexts
         public DbSet<Token> Tokens { get; set; }
         public DbSet<PaymentTransaction> Transactions { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Wallet> Wallets { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermission { get; set; }
 

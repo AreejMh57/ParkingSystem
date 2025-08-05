@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Entities
 {
-    public class PaymentTransaction
+    public class PaymentTransaction 
     {
         public Guid TransactionId { get; set; }
         

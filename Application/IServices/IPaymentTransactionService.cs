@@ -10,10 +10,10 @@ namespace Application.IServices
   public interface IPaymentTransactionService
     {
 
-        
+        Task<ConfirmedBookingDto> ConfirmPaymentAndCreateTokenAsync(CreatePaymentTransactionDto dto);
         /// Records a new payment transaction.
-        
-          Task<PaymentTransactionDto> RecordPaymentAsync(CreatePaymentTransactionDto dto);
+
+       //   Task<PaymentTransactionDto> RecordPaymentAsync(CreatePaymentTransactionDto dto);
 
        
         /// Retrieves all payment transactions for a specific user.

@@ -26,5 +26,6 @@ namespace Application.IServices
         //   Task<BookingDto?> CheckBookingAvailabilityAsync(BookingDto dto);
         //   Task<BookingDto> CreateBookingBegainAsync(CreateBookingDto dto);
         Task<IEnumerable<BookingDto>> GetAllBookingsAsync();
+        Task<string> CancelBookingAsync(Guid bookingId);
     }
 }

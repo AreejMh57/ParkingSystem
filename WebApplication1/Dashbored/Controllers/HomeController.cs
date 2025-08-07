@@ -4,7 +4,8 @@ using Microsoft.Extensions.Logging; // 1. إضافة هذا السطر
 
 namespace Dashboard.Controllers
 {
-    [Authorize] 
+   // [Authorize]
+    [Authorize(Roles = "Admin")]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger; // 2. تعريف حقل الـ Logger

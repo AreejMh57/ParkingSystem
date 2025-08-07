@@ -1,7 +1,7 @@
 ﻿// Infrastructure/Services/TokenService.cs
-using Application.DTOs; // لـToken DTOs
-using Application.IServices; // لـITokenService
-using Domain.Entities; // كيان Token الخاص بك
+using Application.DTOs; 
+using Application.IServices; 
+using Domain.Entities; 
 using Domain.IRepositories; // IRepository
 using Microsoft.AspNetCore.Identity; // UserManager, IdentityResult
 using System;
@@ -9,8 +9,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Microsoft.EntityFrameworkCore; // لـ.Include() إذا لزم
-
+using Microsoft.EntityFrameworkCore;
+using Infrastructure.Contexts;
 namespace Infrastructure.Services
 {
     public class TokenService : ITokenService
@@ -20,6 +20,7 @@ namespace Infrastructure.Services
         private readonly IRepository<Booking> _bookingRepo; // للتحقق من BookingId إذا كان موجوداً
         private readonly ILogService _logService;
         private readonly IMapper _mapper;
+        private readonly AppDbContext _context;
 
         // حقن جميع التبعيات
         public TokenService(
@@ -27,13 +28,16 @@ namespace Infrastructure.Services
             UserManager<User> userManager,
             IRepository<Booking> bookingRepo,
             ILogService logService,
+            AppDbContext context,
             IMapper mapper)
+             
         {
             _tokenRepo = tokenRepo;
             _userManager = userManager;
             _bookingRepo = bookingRepo;
             _logService = logService;
             _mapper = mapper;
+             _context= context;
         }
 
         public async Task<TokenDto> CreateCustomTokenAsync(CreateTokenDto dto)
@@ -80,7 +84,7 @@ namespace Infrastructure.Services
             // 4. تحويل الكيان إلى DTO وإرجاعه
             return _mapper.Map<TokenDto>(token);
         }
-
+        /*
         public async Task<IdentityResult> ValidateCustomTokenAsync(ValidateBookingTokenDto dto)
         {
             // 1. البحث عن التوكن بواسطة القيمة ومعرف المستخدم
@@ -123,7 +127,51 @@ namespace Infrastructure.Services
             // إذا مرت جميع التحققات
             await _logService.LogInfoAsync($"Token {token.TokenId} validated successfully for user {dto.UserId}.");
             return IdentityResult.Success;
-        }
+        }*/
+        public async Task<string> ValidateBookingTokenAsync(ValidateBookingTokenDto dto)
+        {
+            //_logger.LogInformation("Attempting to validate token for User {UserId}, Booking {BookingId}, Value {Value}.", dto.UserId, dto.BookingId, dto.Value);
+
+            // 1. البحث عن التوكن بواسطة القيمة ومعرف المستخدم ومعرف الحجز
+            var token = await _context.Tokens
+                                      .FirstOrDefaultAsync(t => t.UserId == dto.UserId &&
+                                                             //   t.BookingId == dto.BookingId
+                                                               
+                                                                t.Value == dto.Value);
+
+            if (token == null)
+            {
+             //   _logger.LogWarning("Token validation failed for User {UserId}, Booking {BookingId}, Value {Value}: Token not found.", dto.UserId, dto.BookingId, dto.Value);
+                return "Invalid token or token not found for the provided details.";
+            }
+
+            // 2. التحقق من انتهاء صلاحية التوكن
+            if (token.ValidTo < DateTime.UtcNow)
+            {
+               // _logger.LogWarning("Token validation failed for User {UserId}, Booking {BookingId}, Token {TokenId}: Token expired.", dto.UserId, dto.BookingId, token.TokenId);
+                return "Token has expired.";
+            }
+
+            // 3. التحقق مما إذا كان التوكن مستخدماً بالفعل
+            if (token.IsUsed)
+            {
+                //_logger.LogWarning("Token validation failed for User {UserId}, Booking {BookingId}, Token {TokenId}: Token already used.", dto.UserId, dto.BookingId, token.TokenId);
+                return "Token has already been used.";
+            }
+
+            // <--- تحديث IsUsed هنا بعد التحقق الناجح --->
+            // من المهم تحديث التوكن كـ "مستخدم" لمنع إعادة استخدامه
+            token.IsUsed = true;
+            token.UpdatedAt = DateTime.UtcNow;
+            _tokenRepo.Update(token); // أو _context.Tokens.Update(token);
+            await _tokenRepo.SaveChangesAsync(); // أو await _context.SaveChangesAsync();
+           // _logger.LogInformation("Token {TokenId} marked as used after successful validation for User {UserId}, Booking {BookingId}.", token.TokenId, dto.UserId, dto.BookingId);
+
+            // إذا مرت جميع التحققات
+           // _logger.LogInformation("Token {TokenId} validated successfully for User {UserId}, Booking {BookingId}.", token.TokenId, dto.UserId, dto.BookingId);
+            return "OK";
+        
+    }
 
         public async Task<IEnumerable<TokenDto>> GetActiveTokensByUserIdAndBookingIdAsync(string userId, Guid? bookingId = null)
         {

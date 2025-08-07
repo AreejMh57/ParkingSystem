@@ -1,7 +1,6 @@
 ﻿using Application.DTOs;
 using Application.IServices;
 using Domain.Entities;
-using Domain.IRepositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -9,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Domain.IRepositories;
+
 
 namespace Dashboard.Controllers
 {
@@ -30,14 +31,15 @@ namespace Dashboard.Controllers
         }
 
         // GET: /Wallet
-        public async Task<IActionResult> Index()
+      /*  public async Task<IActionResult> Index()
         {
             _logger.LogInformation("Admin accessed the Wallet management page.");
+
 
             // بما أن IWalletService لا تحتوي على GetAllWalletsAsync()
             // سنستخدم الـ Repository مباشرة هنا (وهذا ليس أفضل ممارسة للـ Clean Arch. لكنه حل عملي مؤقت)
             // الأفضل هو إضافة GetAllWalletsAsync() إلى IWalletService
-            var wallets = await _walletRepo.GetAllAsync();
+           /* var wallets = await _walletRepo.GetAllAsync();
 
             // يجب أن نستخدم AutoMapper لتحويل الكيانات إلى DTOs
             // سنفترض وجود تابع Map في الـ controller أو نمرر الـ mapper
@@ -48,20 +50,27 @@ namespace Dashboard.Controllers
                 walletDtos.Add(new WalletDto
                 {
                     WalletId = wallet.WalletId,
-                   // UserId = wallet.UserId,
+                    UserId = wallet.UserId,
                     Balance = wallet.Balance,
-                  //  CreatedAt = wallet.CreatedAt,
-                  //  UpdatedAt = wallet.UpdatedAt
+                    CreatedAt = wallet.CreatedAt,
+                    UpdatedAt = wallet.UpdatedAt
                 });
             }
 
             // ملاحظة: لتحسين هذا، أضف GetAllWalletsAsync() إلى IWalletService واستخدم الـ mapper هناك.
 
             return View(walletDtos);
-        }
+        }*/
+        public async Task<IActionResult> Index()
+    {
+        // تأكد أنك تستدعي التابع الجديد الذي قمنا بتعديله
+        var wallets = await _walletService.GetAllWalletsAsync();
 
-        // GET: /Wallet/Details/{id}
-        public async Task<IActionResult> Details(Guid id)
+        return View(wallets);
+    }
+
+    // GET: /Wallet/Details/{id}
+    public async Task<IActionResult> Details(Guid id)
         {
             _logger.LogInformation("Admin accessed details for wallet ID: {WalletId}.", id);
 
@@ -76,10 +85,10 @@ namespace Dashboard.Controllers
             var walletDto = new WalletDto
             {
                 WalletId = wallet.WalletId,
-              //  UserId = wallet.UserId,
+                UserId = wallet.UserId,
                 Balance = wallet.Balance,
-               // CreatedAt = wallet.CreatedAt,
-               // UpdatedAt = wallet.UpdatedAt
+                CreatedAt = wallet.CreatedAt,
+                UpdatedAt = wallet.UpdatedAt
             };
 
             return View(walletDto);

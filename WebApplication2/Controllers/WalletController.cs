@@ -50,6 +50,8 @@ namespace Presentation.Controllers
         /// </summary>
         /// <param name="dto">Wallet creation details.</param>
         /// <returns>The created WalletDto on success.</returns>
+        /// /*
+        /*
         [HttpPost("create")]
         [Authorize(Policy = "WALLET_CREATE")]
         public async Task<IActionResult> CreateWallet([FromBody] CreateWalletDto dto)
@@ -81,7 +83,7 @@ namespace Presentation.Controllers
                 return StatusCode(500, new { Message = "An error occurred while creating the wallet.", Details = ex.Message });
             }
         }
-
+        */
         /// <summary>
         /// Deposits funds into a user's wallet.
         /// Requires 'wallet_update' permission.

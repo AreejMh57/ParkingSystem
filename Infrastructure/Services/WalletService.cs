@@ -8,6 +8,8 @@ using Application.IServices;
 using AutoMapper;
 using Domain.Entities;
 using Domain.IRepositories;
+using Infrastructure.Contexts;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Infrastructure.Services
@@ -19,14 +21,16 @@ namespace Infrastructure.Services
         private readonly IRepository<Wallet> _walletRepo;
         private readonly ILogService _logService;
         private readonly IMapper _mapper; // Inject IMapper
+        private readonly AppDbContext _context;
 
-        public WalletService(IRepository<Wallet> walletRepo, ILogService logService, IMapper mapper) // Add IMapper to constructor
+        public WalletService(IRepository<Wallet> walletRepo, ILogService logService, IMapper mapper, AppDbContext context) // Add IMapper to constructor
         {
             _walletRepo = walletRepo;
             _logService = logService;
             _mapper = mapper; // Assign mapper
+            _context = context;
         }
-
+        /*
         public async Task<WalletDto> CreateWalletAsync(CreateWalletDto dto) // Changed return type
         {
             var existingWallets = await _walletRepo.FilterByAsync(new Dictionary<string, object> { { "UserId", dto.UserId } });
@@ -51,7 +55,7 @@ namespace Infrastructure.Services
             await _logService.LogInfoAsync($"Wallet {wallet.WalletId} created for user {dto.UserId}. Initial balance: {dto.Balance}");
 
             return _mapper.Map<WalletDto>(wallet); // Return WalletDto
-        }
+        }*/
 
         public async Task<WalletDto> DepositAsync(Guid walletId, decimal amount) // Changed return type
         {
@@ -125,6 +129,31 @@ namespace Infrastructure.Services
 
 
             return _mapper.Map<WalletDto>(wallet); // Return WalletDto
+        }
+        // التابع الذي سيجلب كل المحافظ مع بيانات المستخدم
+        public async Task<IEnumerable<WalletDto>> GetAllWalletsAsync()
+        {
+            // استخدم الـ DbContext مباشرةً مع .Include()
+            // هذا سيجلب بيانات المحفظة + بيانات المستخدم المرتبط بها
+            var wallets = await _context.Wallets
+                                        .Include(w => w.User) // هذا السطر هو مفتاح الحل
+                                        .ToListAsync();
+
+            // استخدم AutoMapper لتحويل قائمة الكيانات إلى قائمة من DTOs
+            // هنا يجب التأكد من أن الـ AutoMapper Profile الخاص بك يعرف كيف يملأ UserName و UserEmail
+            // أو يمكنك القيام بذلك يدوياً كما في المثال التالي:
+            var walletDtos = wallets.Select(w => new WalletDto
+            {
+                WalletId = w.WalletId,
+                UserId = w.UserId,
+                Balance = w.Balance,
+                CreatedAt = w.CreatedAt,
+                UpdatedAt = w.UpdatedAt,
+                // يتم ملؤها من الكيان المرتبط
+                Email = w.User?.Email      // يتم ملؤها من الكيان المرتبط
+            }).ToList();
+
+            return walletDtos;
         }
     }
 }

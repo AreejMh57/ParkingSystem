@@ -1,20 +1,21 @@
 ﻿// Presentation/Controllers/TokenController.cs
-using Application.DTOs; // لـToken DTOs
-using Application.IServices; // لـITokenService
-using Microsoft.AspNetCore.Authorization; // لـ[Authorize] attribute
-using Microsoft.AspNetCore.Mvc; // لـControllerBase, IActionResult, إلخ
-using System; // لـGuid
-using System.Collections.Generic; // لـIEnumerable
-using System.Security.Claims; // لـClaimTypes.NameIdentifier
+using Application.DTOs; 
+using Application.IServices; 
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc; 
+using System; 
+using System.Collections.Generic; 
+using System.Security.Claims; 
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity; // لـIdentityResult
+using Microsoft.AspNetCore.Identity; 
 
 namespace Presentation.Controllers
 {
     [ApiController] // يشير إلى أن هذا المتحكم يستجيب لطلبات API الويب
     [Route("api/[controller]")] // يحدد المسار الأساسي لهذا المتحكم (مثلاً: /api/Token)
     // <--- حماية عامة: يمكن أن تكون لـAdmin أو ParkingManager إذا كانت الإدارة مركزية --->
-    [Authorize(Roles = "Admin,ParkingManager")] // هذا المتحكم خاص بالإدارة بشكل عام
+   //فر
+   //[Authorize(Roles = "Admin,ParkingManager")] // هذا المتحكم خاص بالإدارة بشكل عام
     public class TokenController : ControllerBase
     {
         private readonly ITokenService _tokenService;
@@ -118,10 +119,9 @@ namespace Presentation.Controllers
         /// </summary>
         /// <param name="dto">DTO containing user ID and the token string.</param>
         /// <returns>Success message or detailed failure reasons.</returns>
-        [HttpPost("validate")]
-        // [AllowAnonymous] // يمكن جعله متاحاً للعامة إذا كانت عملية التحقق لا تتطلب تسجيل دخول
-        //[Authorize(Policy = "TOKEN_VALIDATE")] // تتطلب صلاحية التحقق من التوكنات (إذا كان للمصادقين)
-        public async Task<IActionResult> ValidateToken([FromBody] ValidateBookingTokenDto dto)
+         // يمكن جعله متاحاً للعامة إذا كانت عملية التحقق لا تتطلب تسجيل دخول
+                         //[Authorize(Policy = "TOKEN_VALIDATE")] // تتطلب صلاحية التحقق من التوكنات (إذا كان للمصادقين)
+        /*public async Task<IActionResult> ValidateToken([FromBody] ValidateBookingTokenDto dto)
         {
             if (!ModelState.IsValid)
             {
@@ -142,7 +142,38 @@ namespace Presentation.Controllers
                 return StatusCode(500, new { Message = "An error occurred during token validation.", Details = ex.Message });
             }
         }
+        */
+        [HttpPost("validate")]
+        [AllowAnonymous]
+        public async Task<ActionResult<string>> ValidateToken([FromBody] ValidateBookingTokenDto dto)
+        {
+            try
+            {
+              //  _logger.LogInformation("Received token validation request for User {UserId}, Booking {BookingId}.", dto.UserId, dto.BookingId);
 
+                // استدعاء خدمة التوكن للتحقق من صحة التوكن
+                var validationResult = await _tokenService.ValidateBookingTokenAsync(dto);
+
+                // إذا كانت النتيجة تحتوي على رسالة خطأ، أعدها كـ BadRequest
+                if (validationResult.Contains("Invalid token") ||
+                    validationResult.Contains("Token has expired") ||
+                    validationResult.Contains("Token has already been used"))
+                {
+                //    _logger.LogWarning("Token validation failed: {ValidationResult}", validationResult);
+                    return BadRequest(validationResult);
+                }
+
+                // إذا كان التوكن صالحًا، أعد النتيجة بنجاح (OK)
+            //    _logger.LogInformation("Token validation successful: {ValidationResult}", validationResult);
+                return Ok(validationResult);
+            }
+            catch (Exception ex)
+            {
+                // في حالة وجود أي خطأ غير متوقع، يعود برمز حالة 500 Internal Server Error.
+              //  _logger.LogError(ex, "An unexpected error occurred during token validation for User {UserId}, Booking {BookingId}.", dto.UserId, dto.BookingId);
+                return StatusCode(500, "An error occurred while processing your request.");
+            }
+        }
         /// <summary>
         /// Retrieves active tokens for a user by their ID and/or BookingId (e.g., for admin review).
         /// Requires 'token_browse' permission.
@@ -167,13 +198,11 @@ namespace Presentation.Controllers
             }
         }
 
-        /// <summary>
-        /// Cleans up expired and used tokens from the database. (Admin-level trigger)
-        /// Requires 'token_delete' permission.
-        /// </summary>
-        /// <returns>Number of tokens cleaned up.</returns>
+    
+        // Cleans up expired and used tokens from the database. (Admin-level trigger)
+       
         [HttpDelete("cleanup-expired-used")]
-        [Authorize(Policy = "TOKEN_DELETE")] // تتطلب صلاحية حذف التوكنات
+        [Authorize(Policy = "TOKEN_DELETE")] ////Requires permission to delete tokens
         public async Task<IActionResult> CleanupExpiredAndUsedTokens()
         {
             try

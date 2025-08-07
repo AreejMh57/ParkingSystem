@@ -23,8 +23,7 @@ namespace Application.IServices
         /// </summary>
         /// <param name="dto">DTO containing user ID and the token string.</param>
         /// <returns>An IdentityResult indicating if the token is valid or expired.</returns>
-        Task<IdentityResult> ValidateCustomTokenAsync(ValidateBookingTokenDto dto);
-
+        Task<string> ValidateBookingTokenAsync(ValidateBookingTokenDto dto);
         /// <summary>
         /// Retrieves active tokens for a user by BookingId (e.g., for admin review).
         /// </summary>

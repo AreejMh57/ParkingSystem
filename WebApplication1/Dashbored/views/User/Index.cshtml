@@ -1,0 +1,58 @@
+﻿@model IEnumerable<Application.DTOs.UserDto>
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5">Users Management</h1>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info" role="alert">
+            No users found.
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-hover table-striped">
+                    <thead class="table-light">
+                        <tr>
+                           
+                            <th>Registration Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                              
+                               
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-sm btn-info">
+                                        <i class="fas fa-search-plus"></i> View
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+
+                                    <form asp-action="Delete" asp-route-id="@user.Id" method="post" style="display:inline;"
+                                          onsubmit="return confirm('WARNING: Are you sure you want to permanently delete this user?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash-alt"></i> Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

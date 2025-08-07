@@ -22,7 +22,8 @@
                     <thead class="table-light">
                         <tr>
                             <th>Wallet ID</th>
-                            <th>User ID</th>
+                        
+                            <th>Email</th>
                             <th>Balance</th>
                             <th>Last Updated</th>
                             <th>Actions</th>
@@ -34,8 +35,9 @@
                             <tr>
                                 <td>@wallet.WalletId.ToString().Substring(0, 8)...</td>
                                
+                                <td>@wallet.Email</td>
                                 <td>@wallet.Balance.ToString("C")</td>
-                              
+                                <td>@wallet.UpdatedAt.ToString("g")</td>
                                 <td>
                                     <a asp-action="Details" asp-route-id="@wallet.WalletId" class="btn btn-sm btn-info">
                                         <i class="fas fa-search-plus"></i> View

@@ -125,7 +125,7 @@ namespace Peresentation.Controllers
         /// Creates a new parking booking.
         /// Requires 'booking_create' permission.
         /// </summary>
-        
+
         [HttpPost("create")]
         // [Authorize(Policy = "booking_create")]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingDto dto)
@@ -155,7 +155,7 @@ namespace Peresentation.Controllers
                 return StatusCode(500, new { Message = "An unexpected error occurred", Details = ex.Message });
             }
         }
-        
+
         /// <summary>
         /// Retrieves all bookings for the authenticated user.
         /// Requires 'booking_browse' permission.
@@ -190,6 +190,19 @@ namespace Peresentation.Controllers
             }
             return Ok(booking);
         }
+
+
+      
+
+
+
+
+
+
+
+
+
+            /*
 
         /// <summary>
         /// Cancels a specific booking.
@@ -232,5 +245,7 @@ namespace Peresentation.Controllers
                 return StatusCode(500, new { Message = "An unexpected error occurred", Details = ex.Message });
             }
         }
+    }*/
+        }
     }
-}
+    

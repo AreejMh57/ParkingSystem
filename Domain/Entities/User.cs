@@ -15,5 +15,9 @@ namespace Domain.Entities
 
         public ICollection<Token>? Tokens
         { get; set; }
+
+      // public DateTime? BanEndDate { get; set; } // Temporary ban end date
+       // public bool IsPermanentlyBanned { get; set; } //Is it permanently banned?
+       // public int TemporaryBanCount { get; set; } // Number of times temporarily banned
     }
 }

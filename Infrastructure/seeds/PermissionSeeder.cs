@@ -6,9 +6,9 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Domain.Entities;
 using Infrastructure.Contexts;
-using Infrastructure.seeds.PermissionData; // لـPermissionGenerator, ProjectModules, PermissionActions
+using Infrastructure.seeds.PermissionData; // For PermissionGenerator, ProjectModules, PermissionActions
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore; // لـToListAsync()
+using Microsoft.EntityFrameworkCore; // For ToListAsync()
 
 namespace Infrastructure.Seeds
 {
@@ -20,40 +20,40 @@ namespace Infrastructure.Seeds
         {
             var permissions = PermissionGenerator.GenerateAll();
 
-            // حفظ الصلاحيات في DB
-            // نحصل على الأسماء الموجودة بالفعل لمنع التكرار
+            // Save permissions to the DB
+            // We get the names that already exist to prevent duplicates
             var existingPermissionNames = await context.Permissions.Select(p => p.Name).ToHashSetAsync();
             var newPermissions = permissions
                 .Where(p => !existingPermissionNames.Contains(p.Name))
                 .ToList();
 
-            if (newPermissions.Any()) // أضف هذا التحقق لتجنب AddRange إذا كانت فارغة
+            if (newPermissions.Any()) // Add this check to avoid AddRange if it's empty
             {
                 context.Permissions.AddRange(newPermissions);
                 await context.SaveChangesAsync();
             }
 
-            // <--- تم حذف جزء إنشاء الأدوار هنا (يتم في IdentitySeeder) --->
+            // <--- The part for creating roles has been removed here (it's done in IdentitySeeder) --->
 
-            // جلب الصلاحيات من قاعدة البيانات (بعد حفظها) لضمان الحصول على IDs
+            // Fetch permissions from the database (after saving them) to ensure we have the IDs
             var dbPermissions = await context.Permissions.ToListAsync();
 
-            // Admin: جميع الصلاحيات باستثناء booking_delete
+            // Admin: All permissions except booking_delete
             var adminPermissions = dbPermissions
-                .Where(p => p.Name != "BOOKING_DELETE") // تأكد أن الاسم كبير
+                .Where(p => p.Name != "BOOKING_DELETE") // Make sure the name is uppercase
                 .ToList();
             await AssignPermissionsToRole(roleManager, "Admin", adminPermissions);
 
-            // Customer: فقط browse + booking_create + wallet_create
+            // Customer: Only browse + booking_create + wallet_create
             var customerPermissions = dbPermissions
                 .Where(p =>
-                    p.Name.EndsWith("_BROWSE") || // تأكد من مطابقة الأحرف الكبيرة
+                    p.Name.EndsWith("_BROWSE") || // Make sure to match the uppercase letters
                     p.Name == "BOOKING_CREATE" ||
                     p.Name == "WALLET_CREATE")
                 .ToList();
             await AssignPermissionsToRole(roleManager, "Customer", customerPermissions);
 
-            // ParkingManager: جميع الصلاحيات باستثناء booking_delete
+            // ParkingManager: All permissions except booking_delete
             var parkingManagerPermissions = dbPermissions
                 .Where(p => p.Name != "BOOKING_DELETE")
                 .ToList();
@@ -68,7 +68,7 @@ namespace Infrastructure.Seeds
             var role = await roleManager.FindByNameAsync(roleName);
             if (role == null)
             {
-                // إذا لم يتم العثور على الدور، سجل تحذيراً ولا تكمل
+                // If the role is not found, log a warning and don't continue
                 // Console.WriteLine($"Warning: Role '{roleName}' not found when assigning permissions.");
                 return;
             }
@@ -76,7 +76,7 @@ namespace Infrastructure.Seeds
 
             foreach (var permission in permissions)
             {
-                // أضف الـClaim فقط إذا لم يكن موجوداً بالفعل
+                // Add the Claim only if it doesn't already exist
                 if (!existingClaims.Any(c => c.Type == "Permission" && c.Value == permission.Name))
                 {
                     await roleManager.AddClaimAsync(role, new Claim("Permission", permission.Name));

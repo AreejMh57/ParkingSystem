@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Domain.IRepositories
 {
-    public interface IBookingRepository : IRepository<Booking> // يرث من IRepository العامة
+    public interface IBookingRepository : IRepository<Booking> 
     {
-        // <--- إضافة هذه الدالة (إذا لم تكن موجودة) --->
+        
         Task<int> GetCountAsync(Expression<Func<Booking, bool>> predicate);
     }
 }

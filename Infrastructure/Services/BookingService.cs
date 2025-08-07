@@ -20,8 +20,8 @@ namespace Infrastructure.Services
         private readonly IRepository<Booking> _bookingRepo;
         private readonly IRepository<Garage> _garageRepo;
         private readonly IWalletService _walletService; // Injected Wallet Service
-        private readonly ILogService _logService;       // Injected Log Service
-        private readonly IMapper _mapper;               // Injected AutoMapper
+        private readonly ILogService _logService;      // Injected Log Service
+        private readonly IMapper _mapper;              // Injected AutoMapper
         private readonly AppDbContext _context;
         private readonly ILogger<BookingService> _logger;
 
@@ -46,27 +46,27 @@ namespace Infrastructure.Services
         /*
         public async Task<BookingDto> CreateBookingBegainAsync(CreateBookingDto dto)
         {
-            // <--- بداية الـTransaction لضمان الذرية في كل العمليات الأساسية للحجز --->
+            // <--- Start a Transaction to ensure atomicity for all core booking operations --->
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
-                 //   _logger.LogInformation("Attempting to create booking for User {UserId} in Garage {GarageId} (simplified logic).", dto.UserId, dto.GarageId);
+                   // _logger.LogInformation("Attempting to create booking for User {UserId} in Garage {GarageId} (simplified logic).", dto.UserId, dto.GarageId);
 
-                    // 1. التحقق من صحة المدخلات الأساسية
+                    // 1. Validate basic input
                     if (dto.StartTime >= dto.EndTime)
                     {
                         throw new InvalidOperationException("Booking start time must be before end time.");
                     }
 
-                    // 2. التحقق من وجود المستخدم والكراج
+                    // 2. Check for the existence of the user and garage
                     var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == dto.UserId);
                     if (user == null) { throw new KeyNotFoundException($"User with ID {dto.UserId} not found."); }
 
                     var garage = await _garageRepo.GetByIdAsync(dto.GarageId);
                     if (garage == null) { throw new KeyNotFoundException($"Garage with ID {dto.GarageId} not found."); }
 
-                    // 3. التحقق من توفر المكان في الكراج خلال المدة المذكورة (فقط المتاح تماماً)
+                    // 3. Check for spot availability in the garage for the specified period (only fully available)
                     var conflictingBookingsCount = await _context.Bookings
                         .Where(b => b.GarageId == dto.GarageId &&
                                     b.BookingStatus != Booking.Status.Canceled &&
@@ -79,39 +79,39 @@ namespace Infrastructure.Services
                         throw new InvalidOperationException("No available spots in the garage for the selected period.");
                     }
 
-                    // <--- المنطق المعقد (الدفع، التوكن) تم إزالته هنا --->
-                    // لا يوجد خصم للمحفظة، لا يوجد تسجيل لعملية دفع، لا يوجد توليد لتوكن الوصول للحساس
+                    // <--- The complex logic (payment, token) has been removed here --->
+                    // No wallet deduction, no payment transaction logging, no access token generation for the sensor
 
-                    // 4. إنشاء كائن الحجز
+                    // 4. Create the booking object
                     var booking = _mapper.Map<Booking>(dto);
-                    booking.BookingId = Guid.NewGuid(); // <--- توليد BookingId جديد من الـBackend
-                    booking.TotalPrice = 0.00M; // السعر سيكون صفر لأنه لا يوجد خصم مالي هنا
-                    booking.BookingStatus = Booking.Status.Pending; // الحالة الأولية قيد الانتظار
+                    booking.BookingId = Guid.NewGuid(); // <--- Generate a new BookingId from the Backend
+                    booking.TotalPrice = 0.00M; // The price will be zero because there's no financial deduction here
+                    booking.BookingStatus = Booking.Status.Pending; // Initial status is Pending
                     booking.CreatedAt = DateTime.UtcNow;
                     booking.UpdatedAt = DateTime.UtcNow;
 
                     _bookingRepo.AddAsync(booking);
-                    await _bookingRepo.SaveChangesAsync(); // حفظ الحجز
+                    await _bookingRepo.SaveChangesAsync(); // Save the booking
 
-                    // 5. تحديث الأماكن المتاحة في الكراج (تقليل عددها)
+                    // 5. Update available spots in the garage (reduce the count)
                     garage.AvailableSpots--;
                     _garageRepo.Update(garage);
                     await _garageRepo.SaveChangesAsync();
 
-                    // <--- تأكيد (Commit) الـTransaction بعد نجاح إنشاء الحجز وتحديث الكراج --->
+                    // <--- Commit the Transaction after successful booking creation and garage update --->
                     await transaction.CommitAsync();
                   //  _logger.LogInformation("Simplified Booking {BookingId} created successfully for User {UserId} in Garage {GarageId}.", booking.BookingId, dto.UserId, dto.GarageId);
 
-                    return _mapper.Map<BookingDto>(booking); // إرجاع BookingDto
+                    return _mapper.Map<BookingDto>(booking); // Return the BookingDto
                 }
                 catch (Exception ex)
                 {
-                    // في حال حدوث أي خطأ، تراجع عن الـTransaction
+                    // In case of any error, roll back the Transaction
                     await transaction.RollbackAsync();
-                //    _logger.LogError(ex, "Simplified Booking creation failed for User {UserId} in Garage {GarageId}. Transaction rolled back. Error: {Message}", dto.UserId, dto.GarageId, ex.Message);
-                    throw; // أعد رمي الاستثناء ليتم التعامل معه في Controller
+                   // _logger.LogError(ex, "Simplified Booking creation failed for User {UserId} in Garage {GarageId}. Transaction rolled back. Error: {Message}", dto.UserId, dto.GarageId, ex.Message);
+                    throw; // Rethrow the exception to be handled in the Controller
                 }
-            } // نهاية using transaction
+            } // End of using transaction
         }
         */
 
@@ -182,89 +182,89 @@ namespace Infrastructure.Services
         */
         public async Task<BookingDto> CreateBookingAsync(CreateBookingDto dto)
         {
-            // يبدأ هنا block الـ 'using' لـ Transaction.
-            // هذا يضمن أن الـ Transaction سيتم التخلص منه (dispose) بشكل صحيح حتى لو حدث خطأ.
+            // The 'using' block for the Transaction starts here.
+            // This ensures the Transaction is properly disposed of even if an error occurs.
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
                     _logger.LogInformation("Attempting to create temporary booking for User {UserId} in Garage {GarageId}.", dto.UserId, dto.GarageId);
 
-                    // 1. التحقق من صحة المدخلات الأساسية
-                    // يتحقق من أن وقت بدء الحجز يأتي قبل وقت الانتهاء.
+                    // 1. Validate basic input
+                    // Checks that the booking start time comes before the end time.
                     if (dto.StartTime >= dto.EndTime)
                     {
                         throw new InvalidOperationException("Booking start time must be before end time.");
                     }
 
-                    // 2. التحقق من وجود المستخدم والكراج
-                    // يبحث عن المستخدم في قاعدة البيانات باستخدام الـ UserId ويتضمن المحفظة (Wallet).
+                    // 2. Check for the existence of the user and garage
+                    // Searches for the user in the database using the UserId and includes the Wallet.
                     var user = await _context.Users.Include(u => u.Wallet).FirstOrDefaultAsync(u => u.Id == dto.UserId);
-                    // إذا لم يتم العثور على المستخدم، يرمي استثناء.
+                    // If the user is not found, it throws an exception.
                     if (user == null)
                     {
                         throw new KeyNotFoundException($"User with ID {dto.UserId} not found.");
                     }
 
-                    // يبحث عن المرآب (Garage) في قاعدة البيانات باستخدام الـ GarageId.
+                    // Searches for the garage in the database using the GarageId.
                     var garage = await _garageRepo.GetByIdAsync(Guid.Parse(dto.GarageId));
-                    // إذا لم يتم العثور على المرآب، يرمي استثناء.
+                    // If the garage is not found, it throws an exception.
                     if (garage == null)
                     {
                         throw new KeyNotFoundException($"Garage with ID {dto.GarageId} not found.");
                     }
 
-                    // 3. التحقق من توافر الأماكن
+                    // 3. Check for spot availability
                     if (garage.AvailableSpots <= 0)
                     {
                         throw new InvalidOperationException("No available spots in the garage.");
                     }
 
-                    // 4. إنشاء كائن الحجز
-                    // يستخدم AutoMapper لتحويل DTO إلى كائن Booking.
+                    // 4. Create the booking object
+                    // Uses AutoMapper to convert the DTO to a Booking object.
                     var booking = _mapper.Map<Booking>(dto);
-                    // يولد معرفًا فريدًا جديدًا للحجز.
+                    // Generates a new unique ID for the booking.
                     booking.BookingId = Guid.NewGuid();
-                    // يحدد السعر بـ 0.00 لأن هذا حجز مؤقت.
+                    // Sets the price to 0.00 as this is a temporary booking.
                     booking.TotalPrice = 0.00M;
-                    // يحدد حالة الحجز على أنها "قيد الانتظار".
+                    // Sets the booking status to "Pending".
                     booking.BookingStatus = Booking.Status.Pending;
-                    // يحدد وقت الإنشاء.
+                    // Sets the creation time.
                     booking.CreatedAt = DateTime.UtcNow;
-                    // يحدد وقت التحديث.
+                    // Sets the update time.
                     booking.UpdatedAt = DateTime.UtcNow;
 
-                    // يضيف كائن الحجز إلى الـ Repository لتحضيره للحفظ.
+                    // Adds the booking object to the Repository, preparing it for saving.
                     _bookingRepo.AddAsync(booking);
-                    // يحفظ التغييرات في قاعدة البيانات.
+                    // Saves the changes to the database.
                     await _bookingRepo.SaveChangesAsync();
 
-                    // 5. تحديث الأماكن المتاحة في الكراج (تقليل عددها)
-                    // يقلل عدد الأماكن المتاحة في المرآب بـ 1.
+                    // 5. Update available spots in the garage (reduce the count)
+                    // Reduces the number of available spots in the garage by 1.
                     garage.AvailableSpots--;
-                    // يحدّث كائن المرآب في الـ Repository.
+                    // Updates the garage object in the Repository.
                     _garageRepo.Update(garage);
-                    // يحفظ التغييرات في قاعدة البيانات.
+                    // Saves the changes to the database.
                     await _garageRepo.SaveChangesAsync();
 
-                    // <--- تأكيد (Commit) الـTransaction --->
-                    // هنا يتم تأكيد جميع التغييرات التي تمت في الـ Transaction.
+                    // <--- Commit the Transaction --->
+                    // Here, all changes made within the Transaction are confirmed.
                     await transaction.CommitAsync();
 
                     _logger.LogInformation("Temporary Booking {BookingId} created successfully for User {UserId} in Garage {GarageId}.", booking.BookingId, dto.UserId, dto.GarageId);
 
-                    // يرجع كائن BookingDto الذي تم إنشاؤه.
+                    // Returns the created BookingDto object.
                     return _mapper.Map<BookingDto>(booking);
                 }
                 catch (Exception ex)
                 {
-                    // في حال حدوث أي خطأ، يتم الوصول إلى هذا الـ catch block.
-                    // <--- التراجع (Rollback) عن الـTransaction --->
-                    // يتراجع عن جميع التغييرات التي تمت داخل الـ Transaction، مما يضمن أن قاعدة البيانات تبقى في حالتها الأصلية.
+                    // If any error occurs, this catch block is reached.
+                    // <--- Rollback the Transaction --->
+                    // It rolls back all changes made within the Transaction, ensuring the database remains in its original state.
                     await transaction.RollbackAsync();
 
                     _logger.LogError(ex, "Temporary Booking creation failed for User {UserId} in Garage {GarageId}. Transaction rolled back. Error: {Message}", dto.UserId, dto.GarageId, ex.Message);
-                    // يعيد رمي الاستثناء ليتم التعامل معه في الطبقة الأعلى (مثل الـ Controller).
+                    // Rethrows the exception to be handled in the upper layer (like the Controller).
                     throw;
                 }
             }
@@ -348,26 +348,26 @@ namespace Infrastructure.Services
             return _mapper.Map<BookingDto>(booking);
         }
 
-        // ... داخل صنف BookingService
+        // ... inside BookingService class
 
         public async Task<IEnumerable<BookingDto>> GetAllBookingsAsync()
         {
             _logger.LogInformation("Retrieving all bookings for administrative view.");
 
-            // جلب جميع الكيانات (Entities) من الـ Repository
-            // يفترض أن التابع GetAllAsync() موجود في IRepository<T>
+            // Fetch all entities from the Repository
+            // It's assumed that the GetAllAsync() method exists in IRepository<T>
             var bookings = await _bookingRepo.GetAllAsync();
 
-            // إذا كان الـ DTO يحتاج إلى بيانات من جداول مرتبطة (User, Garage)،
-            // ستحتاج إلى طريقة أخرى لجلب البيانات
-            // مثلاً:
+            // If the DTO needs data from related tables (User, Garage),
+            // you'll need another way to fetch the data
+            // For example:
             // var bookingsWithRelatedData = await _context.Bookings
-            //                                       .Include(b => b.User)
-            //                                       .Include(b => b.Garage)
-            //                                       .ToListAsync();
-            // ثم قم بتحويلها باستخدام AutoMapper
+            //                                             .Include(b => b.User)
+            //                                             .Include(b => b.Garage)
+            //                                             .ToListAsync();
+            // Then convert them using AutoMapper
 
-            // استخدام AutoMapper لتحويل قائمة الكيانات إلى قائمة من DTOs
+            // Use AutoMapper to convert the list of entities into a list of DTOs
             var bookingDtos = _mapper.Map<IEnumerable<BookingDto>>(bookings);
 
             _logger.LogDebug("Successfully retrieved {Count} bookings.", bookingDtos.Count());
@@ -375,7 +375,50 @@ namespace Infrastructure.Services
             return bookingDtos;
         }
 
-        // ... بقية التوابع
+
+
+        public async Task<string> CancelBookingAsync(Guid bookingId)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting to cancel booking with ID {BookingId}.", bookingId);
+
+                // 1. Find the booking by its ID
+                var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
+
+                if (booking == null)
+                {
+                    _logger.LogWarning("Booking with ID {BookingId} not found.", bookingId);
+                    return "Booking not found.";
+                }
+
+                // 2. Check the booking status
+                if (booking.BookingStatus == Booking.Status.Canceled)
+                {
+                    _logger.LogWarning("Booking with ID {BookingId} is already canceled.", bookingId);
+                    return "Booking is already canceled.";
+                }
+
+                // 3. Update the booking status to Canceled
+                booking.BookingStatus = Booking.Status.Canceled;
+                booking.UpdatedAt = DateTime.UtcNow;
+
+                // 4. Save the changes
+                _bookingRepo.Update(booking);
+                await _bookingRepo.SaveChangesAsync();
+
+                _logger.LogInformation("Booking with ID {BookingId} was successfully canceled.", bookingId);
+
+                // 5. Return a success message
+                return "Booking successfully canceled.";
+            }
+            catch (Exception ex)
+            {
+                // In case of any error, it is logged and a failure message is returned
+                _logger.LogError(ex, "An error occurred while canceling booking {BookingId}.", bookingId);
+                return "Failed to cancel booking due to an internal error.";
+            }
+        }
     }
 
 }

@@ -108,7 +108,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISensorService, SensorService>();
-
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddScoped<IGarageService, GarageService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();

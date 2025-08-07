@@ -43,8 +43,8 @@ namespace Domain.Entities
         public Token Token { get; set; }
 
         public PaymentTransaction PaymentTransaction { get; set; }
-       
 
+     //  public bool NoShow { get; set; } = false;
 
 
     }

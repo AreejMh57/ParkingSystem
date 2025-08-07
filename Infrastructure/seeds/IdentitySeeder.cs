@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Domain.Entities; // لاستخدام كيان المستخدم الخاص بك (User) و Wallet
-using Microsoft.AspNetCore.Identity; // لاستخدام UserManager و RoleManager و IdentityRole
-using Infrastructure.Contexts; // لاستخدام AppDbContext
-using Microsoft.EntityFrameworkCore; // لـDatabase.BeginTransactionAsync()
+using Domain.Entities; // To use your custom User and Wallet entities
+using Microsoft.AspNetCore.Identity; // To use UserManager, RoleManager, and IdentityRole
+using Infrastructure.Contexts; // To use AppDbContext
+using Microsoft.EntityFrameworkCore; // For Database.BeginTransactionAsync()
 
 namespace Infrastructure.Seeds
 {
@@ -16,9 +16,9 @@ namespace Infrastructure.Seeds
         public static async Task SeedRolesAndAdminUserAsync(
             UserManager<User> userManager,
             RoleManager<IdentityRole> roleManager,
-            AppDbContext context) // AppDbContext يتم تمريره هنا
+            AppDbContext context) // AppDbContext is passed here
         {
-            // 1. إنشاء الأدوار الأساسية
+            // 1. Create the base roles
             string[] roleNames = { "Admin", "Customer", "ParkingManager" };
             foreach (var roleName in roleNames)
             {
@@ -28,7 +28,7 @@ namespace Infrastructure.Seeds
                 }
             }
 
-            // 2. إنشاء المستخدم الإداري (admin@parking.com)
+            // 2. Create the admin user (admin@parking.com)
             var adminEmail = "admin@parking.com";
             var adminPassword = "Admin@123";
 
@@ -36,12 +36,12 @@ namespace Infrastructure.Seeds
 
             if (adminUser == null)
             {
-                // <--- بداية الـTransaction هنا --->
+                // <--- Start of the Transaction here --->
                 using (var transaction = await context.Database.BeginTransactionAsync())
                 {
                     try
                     {
-                        // <--- الخطوة 1: إنشاء المستخدم وحفظه أولاً --->
+                        // <--- Step 1: Create and save the user first --->
                         adminUser = new User
                         {
                             UserName = adminEmail,
@@ -49,53 +49,53 @@ namespace Infrastructure.Seeds
                             EmailConfirmed = true,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow
-                            // User.WalletId غير موجود هنا، لذا لن يسبب خطأ
-                            // User.Wallet Navigation Property لا تُعين بعد هنا
+                            // User.WalletId doesn't exist here, so it won't cause an error
+                            // User.Wallet Navigation Property is not assigned yet here
                         };
 
-                        // هذا السطر سينجح الآن لأنه لا يوجد WalletId في User Entity الذي يمكن أن يكون NULL
+                        // This line will succeed now because there is no WalletId in the User Entity that can be NULL
                         var createResult = await userManager.CreateAsync(adminUser, adminPassword);
 
                         if (createResult.Succeeded)
                         {
                             await userManager.AddToRoleAsync(adminUser, "Admin");
 
-                            // <--- الخطوة 2: الآن، بعد إنشاء المستخدم وتولد adminUser.Id، ننشئ المحفظة ونربطها --->
+                            // <--- Step 2: Now, after the user is created and adminUser.Id is generated, we create and link the wallet --->
                             var adminWallet = new Wallet
                             {
                                 WalletId = Guid.NewGuid(),
                                 Balance = 0.00M,
-                                UserId = adminUser.Id, // <--- هنا يتم تعيين UserId للمحفظة
+                                UserId = adminUser.Id, // <--- Here the UserId is assigned to the wallet
                                 CreatedAt = DateTime.UtcNow,
                                 UpdatedAt = DateTime.UtcNow,
                                 LastUpdated = DateTime.UtcNow
                             };
 
-                            context.Add(adminWallet); // <--- الآن هذا السطر سينجح لأن UserId للمحفظة تم تعيينه
-                            await context.SaveChangesAsync(); // حفظ المحفظة ضمن الـTransaction
+                            context.Add(adminWallet); // <--- Now this line will succeed because the UserId for the wallet is assigned
+                            await context.SaveChangesAsync(); // Save the wallet within the transaction
 
-                            // (اختياري) ربط Navigation Property في User بعد إنشاء المحفظة
-                            // (يتطلب جلب المستخدم مرة أخرى أو التأكد من تتبع الكائن)
+                            // (Optional) Link the Navigation Property in User after creating the wallet
+                            // (Requires fetching the user again or ensuring the object is being tracked)
                             // var userToUpdate = await userManager.FindByIdAsync(adminUser.Id);
                             // if (userToUpdate != null) {
                             //    userToUpdate.Wallet = adminWallet;
                             //    await userManager.UpdateAsync(userToUpdate);
                             // }
 
-                            // <--- إذا وصلت هنا، كل شيء نجح، قم بتأكيد الـTransaction --->
+                            // <--- If you reach here, everything succeeded, commit the transaction --->
                             await transaction.CommitAsync();
                         }
                         else
                         {
-                            // إذا فشل إنشاء المستخدم، تراجع عن الـTransaction
+                            // If user creation fails, roll back the transaction
                             await transaction.RollbackAsync();
                         }
                     }
                     catch (Exception ex)
                     {
-                        // في حال حدوث أي خطأ غير متوقع ضمن الـTransaction
+                        // In case of any unexpected error within the transaction
                         await transaction.RollbackAsync();
-                        throw; // أعد رمي الاستثناء لتراه في الـOutput
+                        throw; // Rethrow the exception to see it in the output
                     }
                 }
             }

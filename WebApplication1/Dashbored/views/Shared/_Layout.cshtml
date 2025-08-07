@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Admin Dashboard</title>
-    <link rel="stylesheet" href="~/css/site.css" /> @* إذا كان لديك ملف CSS *@
+    <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
@@ -16,21 +16,21 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script src="~/js/dashboard.js" asp-append-version="true"></script>
-
+   
 </head>
-<body>
+<body class="@(ViewData["IsLoginPage"] != null && (bool)ViewData["IsLoginPage"] ? "login-background" : "")">
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Admin Dashboard</a>
-                @* يمكنك إضافة روابط أخرى هنا *@
+                
             </div>
         </nav>
     </header>
 
     <div class="container">
         <main role="main" class="pb-3">
-            @RenderBody() @* هنا سيتم عرض محتوى الـView الفعلي (مثل Login.cshtml) *@
+            @RenderBody() 
         </main>
     </div>
 
@@ -40,9 +40,9 @@
         </div>
     </footer>
 
-    @* يمكنك إضافة ملفات JavaScript هنا إذا لزم الأمر *@
-    <script src="~/lib/jquery/dist/jquery.min.js"></script> @* مثال: إذا كنت تستخدم jQuery *@
-    <script src="~/js/site.js"></script> @* مثال: إذا كان لديك ملف JS مخصص *@
-    @await RenderSectionAsync("Scripts", required: false) @* للسماح للـViews بإضافة Scripts خاصة بها *@
+   
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/site.js"></script> 
+    @await RenderSectionAsync("Scripts", required: false) 
 </body>
 </html>

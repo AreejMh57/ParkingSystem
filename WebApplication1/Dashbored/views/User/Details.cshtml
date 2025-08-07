@@ -1,0 +1,38 @@
+﻿@model Application.DTOs.UserDto
+@{
+    ViewData["Title"] = "User Details";
+}
+
+<div class="container mt-5">
+    <h1 class="display-5">User Details</h1>
+    <hr />
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">User ID:</dt>
+                <dd class="col-sm-9">@Model.Id</dd>
+
+                <dt class="col-sm-3">Username:</dt>
+             
+
+                <dt class="col-sm-3">Email:</dt>
+               
+                <dt class="col-sm-3">Registered On:</dt>
+
+
+                <dt class="col-sm-3">Last Updated:</dt>
+               
+            </dl>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit User
+        </a>
+    </div>
+</div>

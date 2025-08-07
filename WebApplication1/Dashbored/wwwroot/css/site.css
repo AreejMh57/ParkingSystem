@@ -29,3 +29,156 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+body {
+    background-color: #f0f2f5;
+}
+
+.dashboard-header {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+    border-left: 5px solid #007bff;
+}
+
+    .dashboard-header h1 {
+        color: #343a40;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .dashboard-header p {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+/* Card styles for better aesthetics */
+.dashboard-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+    .dashboard-card:hover {
+        transform: translateY(-5px); 
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-card .card-body {
+        padding: 2rem;
+    }
+
+/* Icon styles */
+.card-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.dashboard-card:hover .card-icon {
+    transform: scale(1.1);
+}
+
+/* Button styles - Correcting existing classes */
+.btn-garages, .btn-bookings, .btn-users, .btn-wallets {
+    width: 100%;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-garages {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #fff;
+}
+
+    .btn-garages:hover {
+        background-color: #0056b3;
+        border-color: #004085;
+    }
+
+.btn-bookings {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: #fff;
+}
+
+    .btn-bookings:hover {
+        background-color: #1e7e34;
+        border-color: #1c7430;
+    }
+
+.btn-users {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: #fff;
+}
+
+    .btn-users:hover {
+        background-color: #117a8b;
+        border-color: #0d6b7c;
+    }
+
+.btn-wallets {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #333;
+}
+
+    .btn-wallets:hover {
+        background-color: #e0a800;
+        border-color: #d39e00;
+    }
+
+/* Login Page CSS */
+body.login-background {
+    background-color: #e3f2fd;
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 2rem;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+    width: 100%;
+}
+
+.register-link {
+    display: block;
+    text-align: center;
+    margin-top: 1rem;
+}
+////////////
+body.login-background {
+    background-color: #e3f2fd; 
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 2rem;
+    border-radius: 8px;
+    background-color: #fff; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+.btn-primary {
+    width: 100%;
+}
+
+
+.register-link {
+    display: block;
+    text-align: center;
+    margin-top: 1rem;
+}

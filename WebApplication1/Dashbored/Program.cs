@@ -50,6 +50,8 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
+
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Auth/Login"; // ÇבדÓÇÑ Åבל ÕÝÍÉ ÊÓÌםב ÇבÏÎזב (ÅÐÇ בד ם‗ה ÇבדÓÊÎÏד דÕÇÏÞÇנ)

@@ -9,10 +9,12 @@ namespace Application.DTOs
 {
     public class ValidateBookingTokenDto
     {
+        
+
         [Required]
-        public String UserId { get; set; }
+        public string UserId { get; set; }
         [Required]
-        public Guid BookingId { get; set; } 
+        public string BookingId { get; set; } 
 
         [Required]
        
